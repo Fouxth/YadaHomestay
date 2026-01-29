@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YadaHomestay Admin - ระบบหลังบ้าน</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2D5A4A',
+            secondary: '#D4A574',
+            accent: '#E8B86D',
+            background: '#FAF7F2',
+          },
+          fontFamily: {
+            sans: ['Noto Sans Thai', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Noto Sans Thai', sans-serif; background: #f5f5f5; }
+    .sidebar { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.15); }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .status-available { background: #22c55e; }
+    .status-occupied { background: #3b82f6; }
+    .status-cleaning { background: #eab308; }
+    .status-maintenance { background: #ef4444; }
+    .status-reserved { background: #a855f7; }
+    .status-pending { background: #f59e0b; }
+    .status-confirmed { background: #3b82f6; }
+    .status-checked_in { background: #10b981; }
+    .status-checked_out { background: #6b7280; }
+    .status-cancelled { background: #ef4444; }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="login-page" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-green-900">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-home text-white text-3xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">YadaHomestay</h1>
+        <p class="text-gray-500">ระบบจัดการหลังบ้าน</p>
+      </div>
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
+          <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="admin หรือ staff1" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
+          <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="123456" required>
+        </div>
+        <button type="submit" class="w-full bg-primary hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition-colors">
+          <i class="fas fa-sign-in-alt mr-2"></i>เข้าสู่ระบบ
+        </button>
+      </form>
+      <div class="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+        <p class="font-medium mb-2">ข้อมูลทดลอง:</p>
+        <p><span class="font-medium">เจ้าของ:</span> admin / 123456</p>
+        <p><span class="font-medium">พนักงาน:</span> staff1 / 123456</p>
+      </div>
+      <div class="mt-4 text-center">
+        <a href="../" class="text-primary hover:underline text-sm">
+          <i class="fas fa-arrow-left mr-1"></i>กลับไปหน้าเว็บ
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App (hidden initially) -->
+  <div id="main-app" class="hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50 sidebar -translate-x-full lg:translate-x-0">
+      <div class="p-6 border-b">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+            <i class="fas fa-home text-white"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-gray-800">YadaAdmin</h1>
+            <p class="text-xs text-gray-500">ระบบหลังบ้าน</p>
+          </div>
+        </div>
+      </div>
+      <nav class="p-4 space-y-2">
+        <a href="#" data-page="dashboard" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-white">
+          <i class="fas fa-chart-line w-5"></i>
+          <span>แดชบอร์ด</span>
+        </a>
+        <a href="#" data-page="rooms" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100">
+          <i class="fas fa-bed w-5"></i>
+          <span>ห้องพัก</span>
+        </a>
+        <a href="#" data-page="bookings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100">
+          <i class="fas fa-calendar-alt w-5"></i>
+          <span>การจอง</span>
+        </a>
+        <a href="#" data-page="pos" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100">
+          <i class="fas fa-cash-register w-5"></i>
+          <span>POS / หน้าร้าน</span>
+        </a>
+        <a href="#" data-page="bar" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100">
+          <i class="fas fa-wine-glass w-5"></i>
+          <span>บาร์ / มินิบาร์</span>
+        </a>
+        <a href="#" data-page="reports" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 admin-only">
+          <i class="fas fa-chart-bar w-5"></i>
+          <span>รายงาน</span>
+        </a>
+        <a href="#" data-page="users" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 admin-only">
+          <i class="fas fa-users w-5"></i>
+          <span>พนักงาน</span>
+        </a>
+        <a href="#" data-page="settings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 admin-only">
+          <i class="fas fa-cog w-5"></i>
+          <span>ตั้งค่า</span>
+        </a>
+      </nav>
+      <div class="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-white font-bold" id="user-avatar">A</div>
+          <div>
+            <p class="font-medium text-sm" id="user-name">Admin</p>
+            <p class="text-xs text-gray-500" id="user-role">เจ้าของ</p>
+          </div>
+        </div>
+        <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-xl hover:bg-red-50 transition-colors">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>ออกจากระบบ</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center">
+      <i class="fas fa-bars text-gray-700"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 min-h-screen p-4 lg:p-8">
+      <div id="content-area" class="max-w-7xl mx-auto">
+        <!-- Content will be loaded here -->
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

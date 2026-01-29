@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YadaHomestay - รีสอร์ทสุดหรูในธรรมชาติ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2D5A4A',
+            secondary: '#D4A574',
+            accent: '#E8B86D',
+            background: '#FAF7F2',
+          },
+          fontFamily: {
+            sans: ['Noto Sans Thai', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Noto Sans Thai', sans-serif; }
+    .hero-bg { background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920'); background-size: cover; background-position: center; }
+    .ken-burns { animation: kenBurns 20s ease-in-out infinite alternate; }
+    @keyframes kenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+    .scroll-reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
+    .scroll-reveal.active { opacity: 1; transform: translateY(0); }
+    .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2); }
+    .room-card { transition: all 0.3s ease; }
+    .room-card:hover .room-overlay { opacity: 1; }
+    .gallery-item { overflow: hidden; }
+    .gallery-item img { transition: transform 0.5s ease; }
+    .gallery-item:hover img { transform: scale(1.1); }
+    .booking-step { display: none; }
+    .booking-step.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .date-input::-webkit-calendar-picker-indicator { filter: invert(0.4); cursor: pointer; }
+  </style>
+<base target="_blank">
+</head>
+<body class="bg-background">
+  <!-- Navigation -->
+  <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-transparent">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="#" class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+            <i class="fas fa-home text-white text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-white">YadaHomestay</h1>
+            <p class="text-xs text-white/70">รีสอร์ทสุดหรู</p>
+          </div>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#about" class="text-white/90 hover:text-white transition-colors">เกี่ยวกับเรา</a>
+          <a href="#rooms" class="text-white/90 hover:text-white transition-colors">ห้องพัก</a>
+          <a href="#booking" class="text-white/90 hover:text-white transition-colors">จองห้อง</a>
+          <a href="#gallery" class="text-white/90 hover:text-white transition-colors">แกลเลอรี่</a>
+          <a href="#contact" class="text-white/90 hover:text-white transition-colors">ติดต่อ</a>
+          <a href="admin/" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors">
+            <i class="fas fa-lock mr-2"></i>เข้าสู่ระบบ
+          </a>
+        </div>
+        <button id="mobile-menu-btn" class="md:hidden text-white text-2xl">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-primary/95 backdrop-blur-lg">
+      <div class="px-4 py-4 space-y-3">
+        <a href="#about" class="block text-white py-2">เกี่ยวกับเรา</a>
+        <a href="#rooms" class="block text-white py-2">ห้องพัก</a>
+        <a href="#booking" class="block text-white py-2">จองห้อง</a>
+        <a href="#gallery" class="block text-white py-2">แกลเลอรี่</a>
+        <a href="#contact" class="block text-white py-2">ติดต่อ</a>
+        <a href="admin/" class="block text-white py-2"><i class="fas fa-lock mr-2"></i>เข้าสู่ระบบ</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-bg min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div class="absolute inset-0 ken-burns bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920');"></div>
+    <div class="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
+      <div class="mb-6">
+        <span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm">ยินดีต้อนรับสู่ YadaHomestay</span>
+      </div>
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">สัมผัสธรรมชาติ<br><span class="text-accent">ในบรรยากาศสุดพิเศษ</span></h1>
+      <p class="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">พักผ่อนในห้องพักสุดหรูที่รายล้อมไปด้วยธรรมชาติ บริการระดับพรีเมียม พร้อมสิ่งอำนวยความสะดวกครบครัน</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="#booking" class="bg-primary hover:bg-green-800 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all transform hover:scale-105">
+          <i class="fas fa-calendar-check mr-2"></i>จองห้องพักเลย
+        </a>
+        <a href="#rooms" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all">
+          <i class="fas fa-bed mr-2"></i>ดูห้องพัก
+        </a>
+      </div>
+    </div>
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white animate-bounce">
+      <i class="fas fa-chevron-down text-2xl"></i>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="scroll-reveal">
+          <span class="text-primary font-semibold text-sm uppercase tracking-wider">เกี่ยวกับเรา</span>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mt-2 mb-6">YadaHomestay<br><span class="text-secondary">ที่พักในฝันของคุณ</span></h2>
+          <p class="text-gray-600 mb-6 leading-relaxed">YadaHomestay เป็นรีสอร์ทที่ตั้งอยู่ท่ามกลางธรรมชาติอันแสนสงบ เรามุ่งมั่นที่จะมอบประสบการณ์การพักผ่อนที่ดีที่สุดให้กับแขกทุกท่าน ด้วยห้องพักที่ออกแบบอย่างประณีต พร้อมสิ่งอำนวยความสะดวกครบครัน</p>
+          <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="text-center">
+              <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-bed text-primary text-2xl"></i>
+              </div>
+              <p class="text-2xl font-bold text-gray-800">8</p>
+              <p class="text-sm text-gray-500">ห้องพัก</p>
+            </div>
+            <div class="text-center">
+              <div class="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-users text-secondary text-2xl"></i>
+              </div>
+              <p class="text-2xl font-bold text-gray-800">500+</p>
+              <p class="text-sm text-gray-500">ลูกค้า</p>
+            </div>
+            <div class="text-center">
+              <div class="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-star text-accent text-2xl"></i>
+              </div>
+              <p class="text-2xl font-bold text-gray-800">4.9</p>
+              <p class="text-sm text-gray-500">คะแนน</p>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-reveal relative">
+          <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800" alt="Resort" class="rounded-3xl shadow-2xl w-full">
+          <div class="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-primary rounded-full flex items-center justify-center">
+                <i class="fas fa-award text-white text-xl"></i>
+              </div>
+              <div>
+                <p class="font-bold text-gray-800">รางวัลคุณภาพ</p>
+                <p class="text-sm text-gray-500">มาตรฐาน 5 ดาว</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rooms Section -->
+  <section id="rooms" class="py-20 px-4 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 scroll-reveal">
+        <span class="text-primary font-semibold text-sm uppercase tracking-wider">ห้องพักของเรา</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mt-2">เลือกห้องพักที่ใช่<span class="text-secondary">สำหรับคุณ</span></h2>
+        <p class="text-gray-500 mt-4 max-w-2xl mx-auto">ห้องพักหลากหลายสไตล์ให้เลือกสรร ตั้งแต่ห้องมาตรฐานไปจนถึงห้องแฟมิลี่สุดหรู</p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="rooms-grid">
+        <!-- Rooms will be loaded dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Booking Section -->
+  <section id="booking" class="py-20 px-4 bg-primary/5">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-12 scroll-reveal">
+        <span class="text-primary font-semibold text-sm uppercase tracking-wider">จองห้องพัก</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mt-2">เริ่มต้นการจอง<span class="text-secondary">ของคุณ</span></h2>
+      </div>
+      
+      <div class="bg-white rounded-3xl shadow-xl p-6 md:p-10 scroll-reveal">
+        <!-- Step Indicator -->
+        <div class="flex items-center justify-center mb-10">
+          <div class="flex items-center">
+            <div class="step-indicator w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold" data-step="1">1</div>
+            <div class="step-line w-16 md:w-24 h-1 bg-gray-200 mx-2" data-line="1"></div>
+            <div class="step-indicator w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold" data-step="2">2</div>
+            <div class="step-line w-16 md:w-24 h-1 bg-gray-200 mx-2" data-line="2"></div>
+            <div class="step-indicator w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold" data-step="3">3</div>
+          </div>
+        </div>
+        <div class="flex justify-center text-sm text-gray-500 mb-8">
+          <span class="w-24 text-center">เลือกวันที่</span>
+          <span class="w-24 text-center">เลือกห้อง</span>
+          <span class="w-24 text-center">ยืนยัน</span>
+        </div>
+
+        <!-- Step 1: Date Selection -->
+        <div id="step-1" class="booking-step active">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เข้าพัก *</label>
+              <input type="date" id="checkin-date" class="date-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ออก *</label>
+              <input type="date" id="checkout-date" class="date-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" required>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนผู้ใหญ่ *</label>
+              <select id="adults" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+                <option value="1">1 ท่าน</option>
+                <option value="2" selected>2 ท่าน</option>
+                <option value="3">3 ท่าน</option>
+                <option value="4">4 ท่าน</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนเด็ก</label>
+              <select id="children" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+                <option value="0" selected>0 ท่าน</option>
+                <option value="1">1 ท่าน</option>
+                <option value="2">2 ท่าน</option>
+              </select>
+            </div>
+          </div>
+          <button onclick="goToStep(2)" class="w-full mt-8 bg-primary hover:bg-green-800 text-white py-4 rounded-xl font-semibold transition-colors">
+            <i class="fas fa-arrow-right mr-2"></i>ถัดไป
+          </button>
+        </div>
+
+        <!-- Step 2: Room Selection -->
+        <div id="step-2" class="booking-step">
+          <div id="available-rooms" class="space-y-4 max-h-96 overflow-y-auto">
+            <!-- Available rooms will be loaded here -->
+          </div>
+          <div class="flex gap-4 mt-8">
+            <button onclick="goToStep(1)" class="flex-1 border border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
+              <i class="fas fa-arrow-left mr-2"></i>ย้อนกลับ
+            </button>
+            <button onclick="goToStep(3)" id="btn-step-3" class="flex-1 bg-primary hover:bg-green-800 text-white py-4 rounded-xl font-semibold transition-colors" disabled>
+              <i class="fas fa-arrow-right mr-2"></i>ถัดไป
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Guest Info & Confirm -->
+        <div id="step-3" class="booking-step">
+          <div class="bg-gray-50 rounded-xl p-6 mb-6">
+            <h3 class="font-bold text-lg mb-4">สรุปการจอง</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500">ห้องพัก:</span><span id="summary-room" class="font-medium"></span></div>
+              <div class="flex justify-between"><span class="text-gray-500">เข้าพัก:</span><span id="summary-checkin"></span></div>
+              <div class="flex justify-between"><span class="text-gray-500">ออก:</span><span id="summary-checkout"></span></div>
+              <div class="flex justify-between"><span class="text-gray-500">จำนวนคืน:</span><span id="summary-nights"></span></div>
+              <div class="flex justify-between"><span class="text-gray-500">จำนวนผู้เข้าพัก:</span><span id="summary-guests"></span></div>
+              <div class="border-t pt-2 mt-2 flex justify-between text-lg font-bold">
+                <span>ยอดรวม:</span><span id="summary-total" class="text-primary"></span>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล *</label>
+              <input type="text" id="guest-name" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="ชื่อ-นามสกุลของคุณ" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์ *</label>
+              <input type="tel" id="guest-phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0xx-xxx-xxxx" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">อีเมล</label>
+              <input type="email" id="guest-email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="your@email.com">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+              <textarea id="guest-note" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" rows="2" placeholder="คำขอพิเศษ (ถ้ามี)"></textarea>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-8">
+            <button onclick="goToStep(2)" class="flex-1 border border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
+              <i class="fas fa-arrow-left mr-2"></i>ย้อนกลับ
+            </button>
+            <button onclick="submitBooking()" class="flex-1 bg-primary hover:bg-green-800 text-white py-4 rounded-xl font-semibold transition-colors">
+              <i class="fas fa-check mr-2"></i>ยืนยันการจอง
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Section -->
+  <section id="gallery" class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 scroll-reveal">
+        <span class="text-primary font-semibold text-sm uppercase tracking-wider">แกลเลอรี่</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mt-2">บรรยากาศ<span class="text-secondary">YadaHomestay</span></h2>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="gallery-item rounded-2xl overflow-hidden aspect-square scroll-reveal">
+          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600" alt="Gallery 1" class="w-full h-full object-cover">
+        </div>
+        <div class="gallery-item rounded-2xl overflow-hidden aspect-square scroll-reveal row-span-2">
+          <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600" alt="Gallery 2" class="w-full h-full object-cover">
+        </div>
+        <div class="gallery-item rounded-2xl overflow-hidden aspect-square scroll-reveal">
+          <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600" alt="Gallery 3" class="w-full h-full object-cover">
+        </div>
+        <div class="gallery-item rounded-2xl overflow-hidden aspect-square scroll-reveal">
+          <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600" alt="Gallery 4" class="w-full h-full object-cover">
+        </div>
+        <div class="gallery-item rounded-2xl overflow-hidden aspect-square scroll-reveal">
+          <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600" alt="Gallery 5" class="w-full h-full object-cover">
+        </div>
+        <div class="gallery-item rounded-2xl overflow-hidden aspect-square scroll-reveal col-span-2">
+          <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800" alt="Gallery 6" class="w-full h-full object-cover">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 scroll-reveal">
+        <span class="text-primary font-semibold text-sm uppercase tracking-wider">รีวิวจากลูกค้า</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mt-2">เสียงตอบรับ<span class="text-secondary">จากแขกของเรา</span></h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-background rounded-2xl p-8 scroll-reveal">
+          <div class="flex items-center gap-1 text-accent mb-4">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <p class="text-gray-600 mb-6">"บรรยากาศดีมาก ห้องพักสะอาด พนักงานบริการดีเยี่ยม จะกลับมาพักอีกแน่นอน!"</p>
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">ส</div>
+            <div>
+              <p class="font-medium">สมชาย ใจดี</p>
+              <p class="text-sm text-gray-500">พักห้องดีลักซ์</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-background rounded-2xl p-8 scroll-reveal">
+          <div class="flex items-center gap-1 text-accent mb-4">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <p class="text-gray-600 mb-6">"พาเด็กๆ มาพักครอบครัว ห้องแฟมิลี่กว้างขวางดีมาก มีกิจกรรมให้ทำเยอะ"</p>
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold">น</div>
+            <div>
+              <p class="font-medium">นภา สวยงาม</p>
+              <p class="text-sm text-gray-500">พักห้องแฟมิลี่</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-background rounded-2xl p-8 scroll-reveal">
+          <div class="flex items-center gap-1 text-accent mb-4">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <p class="text-gray-600 mb-6">"วิวสวย อาหารอร่อย การจองผ่านเว็บก็สะดวกมาก แนะนำเลยค่ะ"</p>
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-white font-bold">ม</div>
+            <div>
+              <p class="font-medium">มานี มีนา</p>
+              <p class="text-sm text-gray-500">พักห้องมาตรฐาน</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-20 px-4 bg-primary/5">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-12">
+        <div class="scroll-reveal">
+          <span class="text-primary font-semibold text-sm uppercase tracking-wider">ติดต่อเรา</span>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mt-2 mb-6">มีคำถาม?<br><span class="text-secondary">ติดต่อเราได้เลย</span></h2>
+          <p class="text-gray-600 mb-8">เรายินดีให้บริการและตอบคำถามของคุณทุกวัน ตั้งแต่เวลา 8:00 - 20:00 น.</p>
+          <div class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-primary text-xl"></i>
+              </div>
+              <div>
+                <p class="font-medium text-gray-800">ที่อยู่</p>
+                <p class="text-gray-500">123 ถนนสุขุมวิท กรุงเทพฯ 10110</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <i class="fas fa-phone text-primary text-xl"></i>
+              </div>
+              <div>
+                <p class="font-medium text-gray-800">โทรศัพท์</p>
+                <p class="text-gray-500">081-234-5678</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <i class="fas fa-envelope text-primary text-xl"></i>
+              </div>
+              <div>
+                <p class="font-medium text-gray-800">อีเมล</p>
+                <p class="text-gray-500">contact@yadahomestay.com</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-reveal">
+          <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="contact-form" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อของคุณ</label>
+                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="ชื่อ-นามสกุล">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">อีเมล</label>
+                <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="your@email.com">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ข้อความ</label>
+                <textarea class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent" rows="4" placeholder="เขียนข้อความของคุณ..."></textarea>
+              </div>
+              <button type="submit" class="w-full bg-primary hover:bg-green-800 text-white py-4 rounded-xl font-semibold transition-colors">
+                <i class="fas fa-paper-plane mr-2"></i>ส่งข้อความ
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-16 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid md:grid-cols-4 gap-8 mb-12">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+              <i class="fas fa-home text-white text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-lg">YadaHomestay</h3>
+              <p class="text-xs text-gray-400">รีสอร์ทสุดหรู</p>
+            </div>
+          </div>
+          <p class="text-gray-400 text-sm">สัมผัสธรรมชาติในบรรยากาศสุดพิเศษ พร้อมบริการระดับพรีเมียม</p>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">ลิงก์ด่วน</h4>
+          <ul class="space-y-2 text-gray-400 text-sm">
+            <li><a href="#about" class="hover:text-white transition-colors">เกี่ยวกับเรา</a></li>
+            <li><a href="#rooms" class="hover:text-white transition-colors">ห้องพัก</a></li>
+            <li><a href="#booking" class="hover:text-white transition-colors">จองห้อง</a></li>
+            <li><a href="#gallery" class="hover:text-white transition-colors">แกลเลอรี่</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">บริการ</h4>
+          <ul class="space-y-2 text-gray-400 text-sm">
+            <li><i class="fas fa-wifi mr-2"></i>Wi-Fi ฟรี</li>
+            <li><i class="fas fa-swimming-pool mr-2"></i>สระว่ายน้ำ</li>
+            <li><i class="fas fa-utensils mr-2"></i>ร้านอาหาร</li>
+            <li><i class="fas fa-spa mr-2"></i>สปา</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">ติดตามเรา</h4>
+          <div class="flex gap-3">
+            <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+              <i class="fab fa-line"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+        <p>&copy; 2024 YadaHomestay. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Booking Success Modal -->
+  <div id="success-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-8 text-center">
+      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-check text-green-600 text-3xl"></i>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-800 mb-2">จองสำเร็จ!</h3>
+      <p class="text-gray-500 mb-6">เราได้รับการจองของคุณแล้ว ทีมงานจะติดต่อกลับเพื่อยืนยันการจอง</p>
+      <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+        <p class="text-sm text-gray-500 mb-1">รหัสการจอง:</p>
+        <p id="booking-code" class="text-xl font-bold text-primary"></p>
+      </div>
+      <button onclick="closeSuccessModal()" class="w-full bg-primary hover:bg-green-800 text-white py-3 rounded-xl font-semibold">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
