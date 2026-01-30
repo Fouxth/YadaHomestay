@@ -1,0 +1,269 @@
+/**
+ * YadaHomestay Frontend Theme
+ * Natural, Calm, Premium Resort Color Palette
+ * 
+ * Primary: Natural Green #2F5D50
+ * Accent: Wood Brown #C2A97E
+ * Background: Warm Off-white #FAF9F6
+ */
+
+/* CSS Custom Properties for Frontend */
+:root {
+    /* Primary Colors - Natural Green */
+    --resort-primary: #2F5D50;
+    --resort-primary-hover: #4A7C6D;
+    --resort-primary-light: rgba(47, 93, 80, 0.1);
+    --resort-primary-medium: rgba(47, 93, 80, 0.5);
+
+    /* Accent Colors - Wood Brown */
+    --resort-accent: #C2A97E;
+    --resort-accent-hover: #A88B5A;
+    --resort-accent-light: rgba(194, 169, 126, 0.1);
+
+    /* Background Colors */
+    --resort-bg-main: #FAF9F6;
+    --resort-bg-card: #FFFFFF;
+    --resort-bg-warm: #F5F3EF;
+
+    /* Text Colors */
+    --resort-text-primary: #1F2933;
+    --resort-text-secondary: #6B7280;
+    --resort-text-muted: rgba(107, 114, 128, 0.6);
+    --resort-text-white: #FFFFFF;
+
+    /* Neutral Colors */
+    --resort-border: #E5E2DC;
+    --resort-shadow: rgba(31, 41, 51, 0.08);
+    --resort-shadow-lg: rgba(31, 41, 51, 0.12);
+
+    /* Gradients */
+    --resort-hero-gradient: linear-gradient(to bottom,
+            rgba(47, 93, 80, 0.7) 0%,
+            rgba(47, 93, 80, 0.4) 50%,
+            rgba(47, 93, 80, 0.6) 100%);
+
+    /* Transitions */
+    --resort-transition: all 0.3s ease;
+    --resort-transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Frontend-specific utility classes */
+.resort-btn-primary {
+    background-color: var(--resort-primary);
+    color: var(--resort-text-white);
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: var(--resort-transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resort-btn-primary:hover {
+    background-color: var(--resort-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(47, 93, 80, 0.3);
+}
+
+.resort-btn-secondary {
+    background-color: transparent;
+    color: var(--resort-primary);
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    border: 2px solid var(--resort-primary);
+    transition: var(--resort-transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resort-btn-secondary:hover {
+    background-color: var(--resort-primary);
+    color: var(--resort-text-white);
+}
+
+.resort-card {
+    background-color: var(--resort-bg-card);
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px var(--resort-shadow);
+    transition: var(--resort-transition-smooth);
+    overflow: hidden;
+}
+
+.resort-card:hover {
+    box-shadow: 0 8px 30px var(--resort-shadow-lg);
+    transform: translateY(-4px);
+}
+
+.resort-section-title {
+    color: var(--resort-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.resort-heading {
+    color: var(--resort-text-primary);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.resort-text-accent {
+    color: var(--resort-accent);
+}
+
+.resort-price {
+    color: var(--resort-accent);
+    font-weight: 700;
+}
+
+/* Navbar specific styles */
+.resort-navbar {
+    background-color: var(--resort-primary);
+    transition: var(--resort-transition);
+}
+
+.resort-navbar-transparent {
+    background-color: transparent;
+}
+
+.resort-navbar-scrolled {
+    background-color: rgba(47, 93, 80, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.resort-nav-link {
+    color: rgba(255, 255, 255, 0.9);
+    transition: var(--resort-transition);
+    position: relative;
+}
+
+.resort-nav-link:hover {
+    color: var(--resort-text-white);
+}
+
+.resort-nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--resort-accent);
+    border-radius: 2px;
+}
+
+/* Hero section */
+.resort-hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.resort-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--resort-hero-gradient);
+    z-index: 1;
+}
+
+.resort-hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: var(--resort-text-white);
+}
+
+.resort-hero-title {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.resort-hero-title span {
+    color: var(--resort-accent);
+}
+
+/* Form elements */
+.resort-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--resort-border);
+    border-radius: 0.75rem;
+    background-color: var(--resort-bg-card);
+    color: var(--resort-text-primary);
+    transition: var(--resort-transition);
+}
+
+.resort-input:focus {
+    outline: none;
+    border-color: var(--resort-primary);
+    box-shadow: 0 0 0 3px rgba(47, 93, 80, 0.1);
+}
+
+/* Footer */
+.resort-footer {
+    background-color: #1a2f2a;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.resort-footer-link {
+    color: rgba(255, 255, 255, 0.7);
+    transition: var(--resort-transition);
+}
+
+.resort-footer-link:hover {
+    color: var(--resort-accent);
+}
+
+/* Animation keyframes */
+@keyframes resortFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes resortSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.resort-animate-fade-in {
+    animation: resortFadeIn 0.6s ease-out forwards;
+}
+
+.resort-animate-slide-up {
+    animation: resortSlideUp 0.8s ease-out forwards;
+}
+
+/* Scroll reveal */
+.resort-scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.resort-scroll-reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
