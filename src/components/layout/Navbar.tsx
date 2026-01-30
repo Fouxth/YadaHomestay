@@ -65,7 +65,7 @@ export const Navbar = () => {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-white">YadaHomestay</h1>
-                            <p className="text-xs text-white/70">รีสอร์ทสุดหรู</p>
+                            <p className="text-xs text-white/70">ญาดาโฮมสเตย์</p>
                         </div>
                     </Link>
                     <div className="hidden md:flex items-center gap-8">
