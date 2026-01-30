@@ -17,6 +17,13 @@ export const Booking = () => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [bookingCode, setBookingCode] = useState('');
 
+    // Helper to parse amenities (can be string or array)
+    const parseAmenities = (amenities: string | string[]): string[] => {
+        if (Array.isArray(amenities)) return amenities;
+        if (typeof amenities === 'string') return amenities.split(',').map(a => a.trim());
+        return [];
+    };
+
     // Handle query param for room pre-selection (if migrated from Home page link)
     // Logic: If room is in query, we still need dates first, but we can remember the preference?
     // Current app logic: "Scroll to booking section with room pre-selected".
@@ -219,7 +226,7 @@ export const Booking = () => {
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-gray-500 mb-2 flex items-center gap-2">
-                                                            <User className="w-4 h-4" />{room.capacity} ท่าน | {room.amenities.slice(0, 3).join(', ')}
+                                                            <User className="w-4 h-4" />{room.capacity} ท่าน | {parseAmenities(room.amenities).slice(0, 3).join(', ')}
                                                         </p>
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-sm text-gray-500">{nights} คืน</span>

@@ -7,6 +7,13 @@ export const Home = () => {
     const { rooms } = useData();
     const observerRef = useRef<IntersectionObserver | null>(null);
 
+    // Helper to parse amenities (can be string or array)
+    const parseAmenities = (amenities: string | string[]): string[] => {
+        if (Array.isArray(amenities)) return amenities;
+        if (typeof amenities === 'string') return amenities.split(',').map(a => a.trim());
+        return [];
+    };
+
     useEffect(() => {
         observerRef.current = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -125,7 +132,7 @@ export const Home = () => {
                                 <div className="p-6">
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">{room.name}</h3>
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                        {room.amenities.slice(0, 4).map((a, i) => (
+                                        {parseAmenities(room.amenities).slice(0, 4).map((a, i) => (
                                             <span key={i} className="px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600">{a}</span>
                                         ))}
                                     </div>

@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("staff") // 'admin' | 'staff'
+  phone     String
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  auditLogs AuditLog[]
+}
+
+model Room {
+  id            String    @id @default(uuid())
+  number        String    @unique
+  name          String
+  type          String    // 'standard' | 'deluxe' | 'family'
+  status        String    @default("available") // 'available' | 'occupied' | 'cleaning' | 'maintenance' | 'reserved'
+  pricePerNight Float
+  capacity      Int
+  amenities     String    // Stored as JSON string or comma separated
+  floor         Int
+  image         String?
+  bookings      Booking[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  bookingCode   String   @unique
+  guestName     String
+  guestPhone    String
+  guestEmail    String?
+  guestNote     String?
+  
+  roomId        String
+  room          Room     @relation(fields: [roomId], references: [id])
+  
+  checkInDate   DateTime
+  checkOutDate  DateTime
+  nights        Int
+  adults        Int
+  children      Int
+  
+  status        String   @default("pending") // 'pending', 'confirmed', ...
+  paymentStatus String   @default("pending") // 'pending', 'paid', ...
+  
+  roomPrice     Float
+  totalAmount   Float
+  paidAmount    Float    @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Product {
+  id        String      @id @default(uuid())
+  code      String      @unique
+  name      String
+  category  String      // 'beverage', 'alcohol', ...
+  price     Float
+  stock     Int
+  unit      String
+  isActive  Boolean     @default(true)
+  orderItems OrderItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  orderCode     String      @unique
+  
+  roomId        String?     // Optional, link to room if room service
+  roomNumber    String?
+  guestName     String?
+  
+  subtotal      Float
+  discount      Float       @default(0)
+  total         Float
+  
+  paymentMethod String      // 'cash', 'transfer'
+  status        String      @default("completed") // 'completed', 'cancelled'
+  
+  items         OrderItem[]
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  productName String
+  price       Float
+  quantity    Int
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  action      String   // CREATE_BOOKING, UPDATE_BOOKING, etc.
+  entityType  String   // 'booking', 'room', 'user', etc.
+  entityId    String
+  details     String?  // JSON string of additional details
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+}

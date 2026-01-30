@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Room, Booking, Product, User, Order } from '../types';
+import { authAPI, roomsAPI, bookingsAPI, productsAPI, ordersAPI, usersAPI } from '../services/api';
 
 interface DataContextType {
     rooms: Room[];
@@ -8,14 +9,22 @@ interface DataContextType {
     users: User[];
     orders: Order[];
     currentUser: User | null;
-    refreshData: () => void;
-    updateRoomStatus: (roomId: string, status: Room['status']) => void;
-    addBooking: (booking: Booking) => void;
-    updateBookingStatus: (bookingId: string, status: Booking['status']) => void;
+    isLoading: boolean;
+    error: string | null;
+    refreshData: () => Promise<void>;
+    refreshRooms: () => Promise<void>;
+    refreshBookings: () => Promise<void>;
+    refreshProducts: () => Promise<void>;
+    refreshUsers: () => Promise<void>;
+    refreshOrders: () => Promise<void>;
+    updateRoomStatus: (roomId: string, status: Room['status']) => Promise<void>;
+    addBooking: (booking: Partial<Booking>) => Promise<Booking>;
+    updateBookingStatus: (bookingId: string, status: Booking['status']) => Promise<void>;
     isRoomAvailable: (roomId: string, checkIn: string, checkOut: string) => boolean;
-    getAvailableRooms: (checkIn: string, checkOut: string, guests: number) => Room[];
-    login: (username: string, password: string) => boolean;
+    getAvailableRooms: (checkIn: string, checkOut: string, guests: number) => Promise<Room[]>;
+    login: (username: string, password: string) => Promise<boolean>;
     logout: () => void;
+    clearError: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -27,126 +36,181 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [users, setUsers] = useState<User[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const initData = () => {
-        // Rooms
-        if (!localStorage.getItem('yada_rooms')) {
-            const defaultRooms: Room[] = [
-                { id: '1', number: '101', name: 'ห้องมาตรฐาน 101', type: 'standard', status: 'available', pricePerNight: 1200, capacity: 2, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ'], floor: 1, image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600' },
-                { id: '2', number: '102', name: 'ห้องมาตรฐาน 102', type: 'standard', status: 'available', pricePerNight: 1200, capacity: 2, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ'], floor: 1, image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600' },
-                { id: '3', number: '103', name: 'ห้องมาตรฐาน 103', type: 'standard', status: 'available', pricePerNight: 1200, capacity: 2, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ'], floor: 1, image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600' },
-                { id: '4', number: '201', name: 'ห้องดีลักซ์ 201', type: 'deluxe', status: 'available', pricePerNight: 1800, capacity: 2, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'อ่างอาบน้ำ', 'ระเบียง'], floor: 2, image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600' },
-                { id: '5', number: '202', name: 'ห้องดีลักซ์ 202', type: 'deluxe', status: 'available', pricePerNight: 1800, capacity: 2, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'อ่างอาบน้ำ', 'ระเบียง'], floor: 2, image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600' },
-                { id: '6', number: '301', name: 'ห้องแฟมิลี่ 301', type: 'family', status: 'available', pricePerNight: 2800, capacity: 4, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'ห้องนั่งเล่น', 'ครัวเล็ก'], floor: 3, image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600' },
-                { id: '7', number: '302', name: 'ห้องแฟมิลี่ 302', type: 'family', status: 'available', pricePerNight: 2800, capacity: 4, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'ห้องนั่งเล่น', 'ครัวเล็ก'], floor: 3, image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600' },
-                { id: '8', number: '303', name: 'ห้องแฟมิลี่ 303', type: 'family', status: 'available', pricePerNight: 2800, capacity: 4, amenities: ['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'ห้องนั่งเล่น', 'ครัวเล็ก'], floor: 3, image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600' }
-            ];
-            localStorage.setItem('yada_rooms', JSON.stringify(defaultRooms));
-        }
-
-        // Products
-        if (!localStorage.getItem('yada_products')) {
-            const defaultProducts: Product[] = [
-                { id: '1', code: 'P001', name: 'น้ำดื่ม', category: 'beverage', price: 20, stock: 100, unit: 'ขวด', isActive: true },
-                { id: '2', code: 'P002', name: 'โค้ก', category: 'beverage', price: 25, stock: 50, unit: 'กระป๋อง', isActive: true },
-                { id: '3', code: 'P003', name: 'เบียร์สิงห์', category: 'alcohol', price: 70, stock: 30, unit: 'กระป๋อง', isActive: true },
-                { id: '4', code: 'P004', name: 'เบียร์ช้าง', category: 'alcohol', price: 75, stock: 25, unit: 'กระป๋อง', isActive: true },
-                { id: '5', code: 'P005', name: 'มาม่า', category: 'snack', price: 15, stock: 80, unit: 'ซอง', isActive: true },
-                { id: '6', code: 'P006', name: 'ขนมปัง', category: 'snack', price: 25, stock: 20, unit: 'ชิ้น', isActive: true }
-            ];
-            localStorage.setItem('yada_products', JSON.stringify(defaultProducts));
-        }
-
-        // Users
-        if (!localStorage.getItem('yada_users')) {
-            const defaultUsers: User[] = [
-                { id: '1', username: 'admin', name: 'เจ้าของรีสอร์ท', role: 'admin', phone: '081-234-5678', email: 'admin@yadahomestay.com', isActive: true, status: 'active' },
-                { id: '2', username: 'staff1', name: 'สมชาย ใจดี', role: 'staff', phone: '082-345-6789', isActive: true, status: 'active' },
-                { id: '3', username: 'staff2', name: 'นภา สวยงาม', role: 'staff', phone: '083-456-7890', email: 'napa@yadahomestay.com', isActive: true, status: 'active' },
-                { id: '4', username: 'staff3', name: 'ประเสริฐ รำรวย', role: 'staff', phone: '084-567-8901', isActive: false, status: 'inactive' }
-            ];
-            localStorage.setItem('yada_users', JSON.stringify(defaultUsers));
-        }
-
-        if (!localStorage.getItem('yada_bookings')) localStorage.setItem('yada_bookings', JSON.stringify([]));
-        if (!localStorage.getItem('yada_orders')) localStorage.setItem('yada_orders', JSON.stringify([]));
-
-        refreshData();
-    };
-
-    const refreshData = () => {
-        setRooms(JSON.parse(localStorage.getItem('yada_rooms') || '[]'));
-        setBookings(JSON.parse(localStorage.getItem('yada_bookings') || '[]'));
-        setProducts(JSON.parse(localStorage.getItem('yada_products') || '[]'));
-        setUsers(JSON.parse(localStorage.getItem('yada_users') || '[]'));
-        setOrders(JSON.parse(localStorage.getItem('yada_orders') || '[]'));
-    };
-
+    // Load user from localStorage on mount
     useEffect(() => {
-        initData();
-        window.addEventListener('storage', refreshData);
-
-        // Auth check
-        const storedUser = localStorage.getItem('yada_current_user');
-        if (storedUser) {
+        const storedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        if (storedUser && token) {
             setCurrentUser(JSON.parse(storedUser));
         }
-
-        return () => window.removeEventListener('storage', refreshData);
     }, []);
 
-    const login = (username: string, pass: string) => {
-        // Hardcoded password from legacy app
-        if (pass !== '123456') return false;
+    // Fetch public data (rooms, products) on initial mount
+    useEffect(() => {
+        const fetchPublicData = async () => {
+            try {
+                const [roomsData, productsData] = await Promise.all([
+                    roomsAPI.getAll(),
+                    productsAPI.getAll()
+                ]);
+                setRooms(roomsData);
+                setProducts(productsData);
+            } catch (err: any) {
+                console.error('Error fetching public data:', err);
+            }
+        };
+        fetchPublicData();
+    }, []);
 
-        // We need to fetch users if not yet loaded in state (though strict mode might cause issues, let's read from LS directly just in case)
-        const currentUsers: User[] = JSON.parse(localStorage.getItem('yada_users') || '[]');
-        const user = currentUsers.find(u => u.username === username && u.isActive);
-
-        if (user) {
-            setCurrentUser(user);
-            localStorage.setItem('yada_current_user', JSON.stringify(user));
-            return true;
+    const refreshRooms = useCallback(async () => {
+        try {
+            const data = await roomsAPI.getAll();
+            setRooms(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch rooms');
         }
-        return false;
+    }, []);
+
+    const refreshBookings = useCallback(async () => {
+        try {
+            const data = await bookingsAPI.getAll();
+            setBookings(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch bookings');
+        }
+    }, []);
+
+    const refreshProducts = useCallback(async () => {
+        try {
+            const data = await productsAPI.getAll();
+            setProducts(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch products');
+        }
+    }, []);
+
+    const refreshUsers = useCallback(async () => {
+        try {
+            const data = await usersAPI.getAll();
+            // Transform isActive to status for frontend compatibility
+            const transformedUsers = data.map((user: any) => ({
+                ...user,
+                status: user.isActive ? 'active' : 'inactive'
+            }));
+            setUsers(transformedUsers);
+        } catch (err: any) {
+            console.error('Error fetching users:', err);
+            setError(err.message || 'Failed to fetch users');
+        }
+    }, []);
+
+    const refreshOrders = useCallback(async () => {
+        try {
+            const data = await ordersAPI.getAll();
+            setOrders(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch orders');
+        }
+    }, []);
+
+    const refreshData = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await Promise.all([
+                refreshRooms(),
+                refreshBookings(),
+                refreshProducts(),
+                refreshUsers(),
+                refreshOrders()
+            ]);
+        } catch (err: any) {
+            setError(err.message || 'Failed to refresh data');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [refreshRooms, refreshBookings, refreshProducts, refreshUsers, refreshOrders]);
+
+    // Load data when user is logged in
+    useEffect(() => {
+        if (currentUser) {
+            console.log('[DataContext] User logged in, fetching all data...', currentUser);
+            refreshRooms();
+            refreshBookings();
+            refreshProducts();
+            refreshUsers();
+            refreshOrders();
+        }
+    }, [currentUser, refreshRooms, refreshBookings, refreshProducts, refreshUsers, refreshOrders]);
+
+    const login = async (username: string, password: string): Promise<boolean> => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await authAPI.login(username, password);
+            if (response.token) {
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                setCurrentUser(response.user);
+                return true;
+            }
+            return false;
+        } catch (err: any) {
+            setError(err.message || 'Login failed');
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const logout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setCurrentUser(null);
-        localStorage.removeItem('yada_current_user');
+        setRooms([]);
+        setBookings([]);
+        setProducts([]);
+        setUsers([]);
+        setOrders([]);
     };
 
-    const updateRoomStatus = (roomId: string, status: Room['status']) => {
-        const updatedRooms = rooms.map(r => r.id === roomId ? { ...r, status } : r);
-        localStorage.setItem('yada_rooms', JSON.stringify(updatedRooms));
-        setRooms(updatedRooms);
+    const updateRoomStatus = async (roomId: string, status: Room['status']) => {
+        try {
+            await roomsAPI.update(roomId, { status });
+            await refreshRooms();
+        } catch (err: any) {
+            setError(err.message || 'Failed to update room status');
+            throw err;
+        }
     };
 
-    const addBooking = (booking: Booking) => {
-        const updatedBookings = [...bookings, booking];
-        localStorage.setItem('yada_bookings', JSON.stringify(updatedBookings));
-        setBookings(updatedBookings);
-
-        // Update room status
-        updateRoomStatus(booking.roomId, 'reserved');
+    const addBooking = async (booking: Partial<Booking>): Promise<Booking> => {
+        try {
+            const newBooking = await bookingsAPI.create(booking);
+            await refreshBookings();
+            await refreshRooms();
+            return newBooking;
+        } catch (err: any) {
+            setError(err.message || 'Failed to create booking');
+            throw err;
+        }
     };
 
-    const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
-        const updatedBookings = bookings.map(b => {
-            if (b.id === bookingId) {
-                if (status === 'cancelled' && b.status !== 'cancelled') {
-                    const room = rooms.find(r => r.id === b.roomId);
-                    if (room) updateRoomStatus(room.id, 'available');
-                }
-                return { ...b, status };
-            }
-            return b;
-        });
-        localStorage.setItem('yada_bookings', JSON.stringify(updatedBookings));
-        setBookings(updatedBookings);
+    const updateBookingStatus = async (bookingId: string, status: Booking['status']) => {
+        try {
+            await bookingsAPI.update(bookingId, { status });
+            await refreshBookings();
+            await refreshRooms();
+        } catch (err: any) {
+            setError(err.message || 'Failed to update booking status');
+            throw err;
+        }
     };
 
-    const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string) => {
+    const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string): boolean => {
         const room = rooms.find(r => r.id === roomId);
         if (!room || room.status === 'maintenance') return false;
 
@@ -165,18 +229,42 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return overlapping.length === 0;
     };
 
-    const getAvailableRooms = (checkIn: string, checkOut: string, guests: number) => {
-        return rooms.filter(room => {
-            if (room.capacity < guests) return false;
-            return isRoomAvailable(room.id, checkIn, checkOut);
-        });
+    const getAvailableRooms = async (checkIn: string, checkOut: string, guests: number): Promise<Room[]> => {
+        try {
+            const availableRooms = await roomsAPI.getAvailable(checkIn, checkOut, guests);
+            return availableRooms;
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch available rooms');
+            return [];
+        }
     };
+
+    const clearError = () => setError(null);
 
     return (
         <DataContext.Provider value={{
-            rooms, bookings, products, users, orders, currentUser,
-            refreshData, updateRoomStatus, addBooking, updateBookingStatus,
-            isRoomAvailable, getAvailableRooms, login, logout
+            rooms,
+            bookings,
+            products,
+            users,
+            orders,
+            currentUser,
+            isLoading,
+            error,
+            refreshData,
+            refreshRooms,
+            refreshBookings,
+            refreshProducts,
+            refreshUsers,
+            refreshOrders,
+            updateRoomStatus,
+            addBooking,
+            updateBookingStatus,
+            isRoomAvailable,
+            getAvailableRooms,
+            login,
+            logout,
+            clearError
         }}>
             {children}
         </DataContext.Provider>

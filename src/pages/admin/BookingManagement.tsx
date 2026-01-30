@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useData } from '../../context/DataContext';
-import { Plus, Search, Calendar, X as XIcon, ChevronDown } from 'lucide-react';
+import { Plus, Search, Calendar, X, ChevronDown, Filter, MoreHorizontal, CheckCircle, XCircle, User, Phone, Mail } from 'lucide-react';
 import type { Booking } from '../../types';
 
 export const BookingManagement = () => {
@@ -10,12 +10,25 @@ export const BookingManagement = () => {
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
     const getStatusText = (status: string) => {
-        const texts: Record<string, string> = { pending: 'รอยืนยัน', confirmed: 'ยืนยันแล้ว', checked_in: 'Check-in แล้ว', checked_out: 'Check-out แล้ว', cancelled: 'ยกเลิก' };
+        const texts: Record<string, string> = {
+            pending: 'รอยืนยัน',
+            confirmed: 'ยืนยันแล้ว',
+            checked_in: 'Check-in',
+            checked_out: 'Check-out',
+            cancelled: 'ยกเลิก'
+        };
         return texts[status] || status;
     };
-    const getStatusColor = (status: string) => {
-        const colors: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', confirmed: 'bg-blue-100 text-blue-700', checked_in: 'bg-green-100 text-green-700', checked_out: 'bg-gray-100 text-gray-700', cancelled: 'bg-red-100 text-red-700' };
-        return colors[status] || 'bg-gray-100 text-gray-700';
+
+    const getStatusBadge = (status: string) => {
+        const styles: Record<string, string> = {
+            pending: 'badge-warning',
+            confirmed: 'badge-info',
+            checked_in: 'badge-success',
+            checked_out: 'badge-secondary',
+            cancelled: 'badge-danger'
+        };
+        return styles[status] || 'badge-secondary';
     };
 
     const filteredBookings = bookings.filter(b => {
@@ -32,173 +45,273 @@ export const BookingManagement = () => {
         confirmed: bookings.filter(b => b.status === 'confirmed').length,
         checked_in: bookings.filter(b => b.status === 'checked_in').length,
         checked_out: bookings.filter(b => b.status === 'checked_out').length,
+        cancelled: bookings.filter(b => b.status === 'cancelled').length,
+    };
+
+    const handleStatusChange = async (bookingId: string, newStatus: Booking['status']) => {
+        try {
+            await updateBookingStatus(bookingId, newStatus);
+            setSelectedBooking(null);
+        } catch (error) {
+            console.error('Failed to update booking status:', error);
+        }
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-6 animate-fade-in">
+            {/* Page Header */}
+            <div className="page-header">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">การจองทั้งหมด</h1>
-                    <p className="text-gray-500">จัดการและดูรายละเอียดการจอง</p>
+                    <h1 className="page-title">การจองทั้งหมด</h1>
+                    <p className="page-subtitle">จัดการและดูรายละเอียดการจอง</p>
                 </div>
-                <button className="bg-primary hover:bg-green-800 text-white px-4 py-2 rounded-xl transition-colors flex items-center gap-2 self-start">
-                    <Plus className="w-5 h-5" /> รับจอง Walk-in
+                <button className="btn-primary">
+                    <Plus className="w-4 h-4" />
+                    รับจอง Walk-in
                 </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {[
                     { key: 'all', label: 'ทั้งหมด', count: statusCounts.all },
                     { key: 'pending', label: 'รอยืนยัน', count: statusCounts.pending },
-                    { key: 'confirmed', label: 'Check-in วันนี้', count: statusCounts.confirmed },
-                    { key: 'checked_in', label: 'Check-out วันนี้', count: statusCounts.checked_in },
-                    { key: 'checked_out', label: 'ยกเลิก', count: bookings.filter(b => b.status === 'cancelled').length },
+                    { key: 'confirmed', label: 'ยืนยันแล้ว', count: statusCounts.confirmed },
+                    { key: 'checked_in', label: 'Check-in', count: statusCounts.checked_in },
+                    { key: 'checked_out', label: 'Check-out', count: statusCounts.checked_out },
+                    { key: 'cancelled', label: 'ยกเลิก', count: statusCounts.cancelled },
                 ].map(s => (
                     <div
                         key={s.key}
                         onClick={() => setStatusFilter(s.key)}
-                        className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-2 ${statusFilter === s.key ? 'border-primary' : 'border-transparent'}`}
+                        className={`card p-4 cursor-pointer transition-all ${statusFilter === s.key ? 'ring-2 ring-accent border-accent' : ''
+                            }`}
                     >
-                        <p className="text-3xl font-bold text-gray-800">{s.count}</p>
-                        <p className="text-sm text-gray-500">{s.label}</p>
+                        <p className="text-2xl font-bold text-text-primary">{s.count}</p>
+                        <p className="text-xs text-text-muted">{s.label}</p>
                     </div>
                 ))}
             </div>
 
             {/* Search & Filter */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="ค้นหาชื่อลูกค้า, รหัสจอง, หมายเลขห้อง..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                </div>
-                <div className="relative">
-                    <select
-                        value={statusFilter}
-                        onChange={e => setStatusFilter(e.target.value)}
-                        className="appearance-none px-4 py-2 pr-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    >
-                        <option value="all">ทุกสถานะ</option>
-                        <option value="pending">รอยืนยัน</option>
-                        <option value="confirmed">ยืนยันแล้ว</option>
-                        <option value="checked_in">Check-in แล้ว</option>
-                        <option value="checked_out">Check-out แล้ว</option>
-                        <option value="cancelled">ยกเลิก</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <div className="card p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="input-group flex-1">
+                        <Search className="input-group-icon" />
+                        <input
+                            type="text"
+                            placeholder="ค้นหาชื่อลูกค้า, รหัสจอง, หมายเลขห้อง..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="input"
+                        />
+                    </div>
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                        <select
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value)}
+                            className="input pl-10 pr-10 appearance-none cursor-pointer"
+                        >
+                            <option value="all">ทุกสถานะ</option>
+                            <option value="pending">รอยืนยัน</option>
+                            <option value="confirmed">ยืนยันแล้ว</option>
+                            <option value="checked_in">Check-in แล้ว</option>
+                            <option value="checked_out">Check-out แล้ว</option>
+                            <option value="cancelled">ยกเลิก</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                    </div>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                {filteredBookings.length > 0 ? (
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
+            {/* Bookings Table */}
+            <div className="card overflow-hidden">
+                <div className="table-container">
+                    <table className="table">
+                        <thead>
                             <tr>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">รหัสจอง</th>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">ลูกค้า</th>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">ห้อง</th>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">วันที่</th>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">จองเวลา</th>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">สถานะ</th>
-                                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">จัดการ</th>
+                                <th>รหัสจอง</th>
+                                <th>ลูกค้า</th>
+                                <th>ห้อง</th>
+                                <th>วันที่เข้าพัก</th>
+                                <th>จำนวนคืน</th>
+                                <th>ยอดรวม</th>
+                                <th>สถานะ</th>
+                                <th></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
-                            {filteredBookings.map(booking => (
-                                <tr key={booking.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 font-mono text-sm">{booking.bookingCode}</td>
-                                    <td className="px-6 py-4">
-                                        <p className="font-medium">{booking.guestName}</p>
-                                        <p className="text-sm text-gray-500">{booking.guestPhone}</p>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <p className="font-medium">{booking.roomNumber}</p>
-                                        <p className="text-sm text-gray-500">{booking.roomName}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <p>{new Date(booking.checkInDate).toLocaleDateString('th-TH')}</p>
-                                        <p className="text-gray-500">ถึง {new Date(booking.checkOutDate).toLocaleDateString('th-TH')}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">{booking.nights} คืน</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                                            {getStatusText(booking.status)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <button onClick={() => setSelectedBooking(booking)} className="text-primary hover:underline text-sm">ดูรายละเอียด</button>
+                        <tbody>
+                            {filteredBookings.length > 0 ? (
+                                filteredBookings.map(booking => (
+                                    <tr key={booking.id} className="cursor-pointer" onClick={() => setSelectedBooking(booking)}>
+                                        <td className="font-medium">{booking.bookingCode}</td>
+                                        <td>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-accent" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{booking.guestName}</p>
+                                                    <p className="text-xs text-text-muted">{booking.guestPhone}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="font-medium">{booking.roomNumber}</span>
+                                        </td>
+                                        <td>
+                                            <div className="text-sm">
+                                                <p>{new Date(booking.checkInDate).toLocaleDateString('th-TH')}</p>
+                                                <p className="text-text-muted text-xs">ถึง {new Date(booking.checkOutDate).toLocaleDateString('th-TH')}</p>
+                                            </div>
+                                        </td>
+                                        <td>{booking.nights} คืน</td>
+                                        <td className="font-medium">฿{booking.totalAmount.toLocaleString()}</td>
+                                        <td>
+                                            <span className={getStatusBadge(booking.status)}>
+                                                {getStatusText(booking.status)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button className="p-2 hover:bg-surface-hover rounded-lg transition-colors">
+                                                <MoreHorizontal className="w-4 h-4 text-text-muted" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={8} className="text-center py-12">
+                                        <Calendar className="w-12 h-12 mx-auto mb-3 text-text-muted opacity-30" />
+                                        <p className="text-text-muted">ไม่พบการจอง</p>
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
-                ) : (
-                    <div className="text-center py-16">
-                        <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <p className="text-gray-500">ไม่พบการจอง</p>
-                    </div>
-                )}
+                </div>
             </div>
 
             {/* Booking Detail Modal */}
             {selectedBooking && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-lg w-full p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold">รายละเอียดการจอง</h3>
-                            <button onClick={() => setSelectedBooking(null)} className="text-gray-400 hover:text-gray-600">
-                                <XIcon className="w-6 h-6" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
+                        <div className="p-6 border-b border-border flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold">รายละเอียดการจอง</h3>
+                                <p className="text-sm text-text-muted">{selectedBooking.bookingCode}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedBooking(null)}
+                                className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="space-y-4">
+
+                        <div className="p-6 space-y-6">
+                            {/* Guest Info */}
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
+                                    <User className="w-7 h-7 text-accent" />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-lg">{selectedBooking.guestName}</h4>
+                                    <div className="flex items-center gap-4 text-sm text-text-muted mt-1">
+                                        <span className="flex items-center gap-1">
+                                            <Phone className="w-4 h-4" />
+                                            {selectedBooking.guestPhone}
+                                        </span>
+                                        {selectedBooking.guestEmail && (
+                                            <span className="flex items-center gap-1">
+                                                <Mail className="w-4 h-4" />
+                                                {selectedBooking.guestEmail}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Booking Details */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div><p className="text-gray-500 text-sm">รหัสจอง</p><p className="font-mono font-bold">{selectedBooking.bookingCode}</p></div>
-                                <div><p className="text-gray-500 text-sm">สถานะ</p><span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(selectedBooking.status)}`}>{getStatusText(selectedBooking.status)}</span></div>
-                            </div>
-                            <div className="border-t pt-4">
-                                <p className="text-gray-500 text-sm mb-2">ข้อมูลลูกค้า</p>
-                                <p className="font-bold">{selectedBooking.guestName}</p>
-                                <p className="text-gray-600">{selectedBooking.guestPhone}</p>
-                                {selectedBooking.guestEmail && <p className="text-gray-600">{selectedBooking.guestEmail}</p>}
-                            </div>
-                            <div className="border-t pt-4">
-                                <p className="text-gray-500 text-sm mb-2">ข้อมูลการเข้าพัก</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><p className="text-sm text-gray-500">ห้อง</p><p className="font-bold">{selectedBooking.roomNumber}</p></div>
-                                    <div><p className="text-sm text-gray-500">จำนวนคืน</p><p className="font-bold">{selectedBooking.nights} คืน</p></div>
-                                    <div><p className="text-sm text-gray-500">Check-in</p><p>{new Date(selectedBooking.checkInDate).toLocaleDateString('th-TH')}</p></div>
-                                    <div><p className="text-sm text-gray-500">Check-out</p><p>{new Date(selectedBooking.checkOutDate).toLocaleDateString('th-TH')}</p></div>
+                                <div className="p-4 bg-surface-hover rounded-lg">
+                                    <p className="text-xs text-text-muted mb-1">ห้องพัก</p>
+                                    <p className="font-semibold">{selectedBooking.roomNumber}</p>
+                                </div>
+                                <div className="p-4 bg-surface-hover rounded-lg">
+                                    <p className="text-xs text-text-muted mb-1">จำนวนคืน</p>
+                                    <p className="font-semibold">{selectedBooking.nights} คืน</p>
+                                </div>
+                                <div className="p-4 bg-surface-hover rounded-lg">
+                                    <p className="text-xs text-text-muted mb-1">Check-in</p>
+                                    <p className="font-semibold">{new Date(selectedBooking.checkInDate).toLocaleDateString('th-TH')}</p>
+                                </div>
+                                <div className="p-4 bg-surface-hover rounded-lg">
+                                    <p className="text-xs text-text-muted mb-1">Check-out</p>
+                                    <p className="font-semibold">{new Date(selectedBooking.checkOutDate).toLocaleDateString('th-TH')}</p>
                                 </div>
                             </div>
-                            <div className="border-t pt-4">
-                                <p className="text-gray-500 text-sm mb-2">ข้อมูลชำระเงิน</p>
-                                <div className="flex justify-between">
-                                    <span>ยอดรวม</span>
-                                    <span className="font-bold text-primary">฿{selectedBooking.totalAmount.toLocaleString()}</span>
+
+                            {/* Payment */}
+                            <div className="p-4 bg-surface-hover rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-text-muted">ยอดรวม</span>
+                                    <span className="font-semibold text-lg">฿{selectedBooking.totalAmount.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-text-muted">ชำระแล้ว</span>
+                                    <span className="font-medium text-success">฿{selectedBooking.paidAmount.toLocaleString()}</span>
                                 </div>
                             </div>
-                        </div>
-                        <div className="mt-6 pt-4 border-t flex gap-2">
-                            {selectedBooking.status === 'confirmed' && (
-                                <button onClick={() => { updateBookingStatus(selectedBooking.id, 'checked_in'); setSelectedBooking({ ...selectedBooking, status: 'checked_in' }); }} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium">Check-in</button>
-                            )}
-                            {selectedBooking.status === 'checked_in' && (
-                                <button onClick={() => { updateBookingStatus(selectedBooking.id, 'checked_out'); setSelectedBooking({ ...selectedBooking, status: 'checked_out' }); }} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-medium">Check-out</button>
-                            )}
-                            {selectedBooking.status === 'pending' && (
-                                <>
-                                    <button onClick={() => { updateBookingStatus(selectedBooking.id, 'confirmed'); setSelectedBooking({ ...selectedBooking, status: 'confirmed' }); }} className="flex-1 bg-primary hover:bg-green-800 text-white py-3 rounded-xl font-medium">ยืนยันการจอง</button>
-                                    <button onClick={() => { updateBookingStatus(selectedBooking.id, 'cancelled'); setSelectedBooking({ ...selectedBooking, status: 'cancelled' }); }} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-medium">ยกเลิก</button>
-                                </>
-                            )}
+
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-text-muted">สถานะ</span>
+                                <span className={getStatusBadge(selectedBooking.status)}>
+                                    {getStatusText(selectedBooking.status)}
+                                </span>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-4 border-t border-border">
+                                {selectedBooking.status === 'pending' && (
+                                    <>
+                                        <button
+                                            onClick={() => handleStatusChange(selectedBooking.id, 'confirmed')}
+                                            className="btn-primary flex-1"
+                                        >
+                                            <CheckCircle className="w-4 h-4" />
+                                            ยืนยันการจอง
+                                        </button>
+                                        <button
+                                            onClick={() => handleStatusChange(selectedBooking.id, 'cancelled')}
+                                            className="btn-danger flex-1"
+                                        >
+                                            <XCircle className="w-4 h-4" />
+                                            ยกเลิก
+                                        </button>
+                                    </>
+                                )}
+                                {selectedBooking.status === 'confirmed' && (
+                                    <button
+                                        onClick={() => handleStatusChange(selectedBooking.id, 'checked_in')}
+                                        className="btn-primary w-full"
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
+                                        Check-in
+                                    </button>
+                                )}
+                                {selectedBooking.status === 'checked_in' && (
+                                    <button
+                                        onClick={() => handleStatusChange(selectedBooking.id, 'checked_out')}
+                                        className="btn-primary w-full"
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
+                                        Check-out
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
