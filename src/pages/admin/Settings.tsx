@@ -1,31 +1,96 @@
-import { useState } from 'react';
-import { Save, Home, Bell, CreditCard, Clock, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, Home, Bell, CreditCard, Clock, Upload, CheckCircle } from 'lucide-react';
+import { settingsAPI } from '../../services/api';
 
 type Tab = 'general' | 'notifications' | 'payments';
 
+interface SettingsData {
+    homestayName: string;
+    address: string;
+    phone: string;
+    email: string;
+    checkInTime: string;
+    checkOutTime: string;
+    notifyNewBooking: boolean;
+    notifyCheckIn: boolean;
+    notifyCheckOut: boolean;
+    notifyLowStock: boolean;
+    notifyDailyReport: boolean;
+    acceptCash: boolean;
+    acceptCard: boolean;
+    acceptTransfer: boolean;
+    depositAmount: string;
+}
+
 export const Settings = () => {
     const [activeTab, setActiveTab] = useState<Tab>('general');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
 
     // Form states
-    const [homestayName, setHomestayName] = useState('YadaHomestay');
-    const [address, setAddress] = useState('123 หมู่ 4 ต.บ้านใหม่ อ.เมือง จ.เชียงใหม่ 50000');
-    const [phone, setPhone] = useState('081-234-5678');
-    const [email, setEmail] = useState('contact@yadahomestay.com');
-    const [checkInTime, setCheckInTime] = useState('14:00');
-    const [checkOutTime, setCheckOutTime] = useState('12:00');
+    const [settings, setSettings] = useState<SettingsData>({
+        homestayName: 'YadaHomestay',
+        address: '123 หมู่ 4 ต.บ้านใหม่ อ.เมือง จ.เชียงใหม่ 50000',
+        phone: '081-234-5678',
+        email: 'contact@yadahomestay.com',
+        checkInTime: '14:00',
+        checkOutTime: '12:00',
+        notifyNewBooking: true,
+        notifyCheckIn: true,
+        notifyCheckOut: true,
+        notifyLowStock: true,
+        notifyDailyReport: false,
+        acceptCash: true,
+        acceptCard: true,
+        acceptTransfer: true,
+        depositAmount: '500'
+    });
 
-    // Notification toggles
-    const [notifyNewBooking, setNotifyNewBooking] = useState(true);
-    const [notifyCheckIn, setNotifyCheckIn] = useState(true);
-    const [notifyCheckOut, setNotifyCheckOut] = useState(true);
-    const [notifyLowStock, setNotifyLowStock] = useState(true);
-    const [notifyDailyReport, setNotifyDailyReport] = useState(false);
+    // Load settings from API
+    useEffect(() => {
+        loadSettings();
+    }, []);
 
-    // Payment toggles
-    const [acceptCash, setAcceptCash] = useState(true);
-    const [acceptCard, setAcceptCard] = useState(true);
-    const [acceptTransfer, setAcceptTransfer] = useState(true);
-    const [depositAmount, setDepositAmount] = useState('500');
+    const loadSettings = async () => {
+        try {
+            setLoading(true);
+            const data = await settingsAPI.getAll();
+            // Convert array of settings to object
+            if (Array.isArray(data)) {
+                const settingsObj: any = {};
+                data.forEach((item: { key: string; value: any }) => {
+                    settingsObj[item.key] = item.value;
+                });
+                setSettings(prev => ({ ...prev, ...settingsObj }));
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        try {
+            setSaving(true);
+            // Save each setting individually
+            const settingsToSave = Object.entries(settings);
+            for (const [key, value] of settingsToSave) {
+                await settingsAPI.update(key, value);
+            }
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (error: any) {
+            alert(error.message || 'เกิดข้อผิดพลาดในการบันทึก');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const updateSetting = (key: keyof SettingsData, value: any) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+    };
 
     const tabs = [
         { key: 'general', label: 'ทั่วไป', icon: Home },
@@ -41,6 +106,14 @@ export const Settings = () => {
             <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
         </button>
     );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -79,8 +152,8 @@ export const Settings = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อโฮมสเตย์</label>
                             <input
                                 type="text"
-                                value={homestayName}
-                                onChange={e => setHomestayName(e.target.value)}
+                                value={settings.homestayName}
+                                onChange={e => updateSetting('homestayName', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
                         </div>
@@ -89,8 +162,8 @@ export const Settings = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">📍 ที่อยู่</label>
                             <input
                                 type="text"
-                                value={address}
-                                onChange={e => setAddress(e.target.value)}
+                                value={settings.address}
+                                onChange={e => updateSetting('address', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
                         </div>
@@ -100,8 +173,8 @@ export const Settings = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">📞 เบอร์โทร</label>
                                 <input
                                     type="text"
-                                    value={phone}
-                                    onChange={e => setPhone(e.target.value)}
+                                    value={settings.phone}
+                                    onChange={e => updateSetting('phone', e.target.value)}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                             </div>
@@ -109,8 +182,8 @@ export const Settings = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">✉️ อีเมล</label>
                                 <input
                                     type="email"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
+                                    value={settings.email}
+                                    onChange={e => updateSetting('email', e.target.value)}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                             </div>
@@ -123,8 +196,8 @@ export const Settings = () => {
                                 </label>
                                 <input
                                     type="time"
-                                    value={checkInTime}
-                                    onChange={e => setCheckInTime(e.target.value)}
+                                    value={settings.checkInTime}
+                                    onChange={e => updateSetting('checkInTime', e.target.value)}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                             </div>
@@ -134,8 +207,8 @@ export const Settings = () => {
                                 </label>
                                 <input
                                     type="time"
-                                    value={checkOutTime}
-                                    onChange={e => setCheckOutTime(e.target.value)}
+                                    value={settings.checkOutTime}
+                                    onChange={e => updateSetting('checkOutTime', e.target.value)}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                             </div>
@@ -169,18 +242,21 @@ export const Settings = () => {
                         </div>
 
                         {[
-                            { label: 'การจองใหม่', desc: 'แจ้งเตือนเมื่อมีการจองเข้ามา', value: notifyNewBooking, onChange: setNotifyNewBooking },
-                            { label: 'เตือน Check-in', desc: 'แจ้งเตือนก่อนเวลา Check-in', value: notifyCheckIn, onChange: setNotifyCheckIn },
-                            { label: 'เตือน Check-out', desc: 'แจ้งเตือนก่อนเวลา Check-out', value: notifyCheckOut, onChange: setNotifyCheckOut },
-                            { label: 'สินค้าใกล้หมด', desc: 'แจ้งเตือนเมื่อสินค้าในบาร์ใกล้หมด', value: notifyLowStock, onChange: setNotifyLowStock },
-                            { label: 'รายงานประจำวัน', desc: 'ส่งรายงานสรุปประจำวันทางอีเมล', value: notifyDailyReport, onChange: setNotifyDailyReport },
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-center justify-between py-3 border-b last:border-b-0">
+                            { key: 'notifyNewBooking', label: 'การจองใหม่', desc: 'แจ้งเตือนเมื่อมีการจองเข้ามา' },
+                            { key: 'notifyCheckIn', label: 'เตือน Check-in', desc: 'แจ้งเตือนก่อนเวลา Check-in' },
+                            { key: 'notifyCheckOut', label: 'เตือน Check-out', desc: 'แจ้งเตือนก่อนเวลา Check-out' },
+                            { key: 'notifyLowStock', label: 'สินค้าใกล้หมด', desc: 'แจ้งเตือนเมื่อสินค้าในบาร์ใกล้หมด' },
+                            { key: 'notifyDailyReport', label: 'รายงานประจำวัน', desc: 'ส่งรายงานสรุปประจำวันทางอีเมล' },
+                        ].map((item) => (
+                            <div key={item.key} className="flex items-center justify-between py-3 border-b last:border-b-0">
                                 <div>
                                     <p className="font-medium text-gray-800">{item.label}</p>
                                     <p className="text-sm text-gray-500">{item.desc}</p>
                                 </div>
-                                <Toggle enabled={item.value} onChange={item.onChange} />
+                                <Toggle
+                                    enabled={settings[item.key as keyof SettingsData] as boolean}
+                                    onChange={(v) => updateSetting(item.key as keyof SettingsData, v)}
+                                />
                             </div>
                         ))}
                     </div>
@@ -194,16 +270,19 @@ export const Settings = () => {
                         </div>
 
                         {[
-                            { label: 'รับชำระเงินสด', desc: 'อนุญาตให้ชำระด้วยเงินสด', value: acceptCash, onChange: setAcceptCash },
-                            { label: 'รับชำระบัตรเครดิต/เดบิต', desc: 'อนุญาตให้ชำระด้วยบัตร', value: acceptCard, onChange: setAcceptCard },
-                            { label: 'รับชำระโอน/พร้อมเพย์', desc: 'อนุญาตให้ชำระด้วยการโอนเงิน', value: acceptTransfer, onChange: setAcceptTransfer },
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-center justify-between py-3 border-b">
+                            { key: 'acceptCash', label: 'รับชำระเงินสด', desc: 'อนุญาตให้ชำระด้วยเงินสด' },
+                            { key: 'acceptCard', label: 'รับชำระบัตรเครดิต/เดบิต', desc: 'อนุญาตให้ชำระด้วยบัตร' },
+                            { key: 'acceptTransfer', label: 'รับชำระโอน/พร้อมเพย์', desc: 'อนุญาตให้ชำระด้วยการโอนเงิน' },
+                        ].map((item) => (
+                            <div key={item.key} className="flex items-center justify-between py-3 border-b">
                                 <div>
                                     <p className="font-medium text-gray-800">{item.label}</p>
                                     <p className="text-sm text-gray-500">{item.desc}</p>
                                 </div>
-                                <Toggle enabled={item.value} onChange={item.onChange} />
+                                <Toggle
+                                    enabled={settings[item.key as keyof SettingsData] as boolean}
+                                    onChange={(v) => updateSetting(item.key as keyof SettingsData, v)}
+                                />
                             </div>
                         ))}
 
@@ -211,8 +290,8 @@ export const Settings = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">ค่ามัดจำ (บาท)</label>
                             <input
                                 type="number"
-                                value={depositAmount}
-                                onChange={e => setDepositAmount(e.target.value)}
+                                value={settings.depositAmount}
+                                onChange={e => updateSetting('depositAmount', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
                             <p className="text-sm text-gray-400 mt-2">จำนวนเงินมัดจำที่ต้องการเก็บตอน Check-in</p>
@@ -222,9 +301,27 @@ export const Settings = () => {
 
                 {/* Save Button */}
                 <div className="flex justify-end mt-6">
-                    <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-green-800">
-                        <Save className="w-5 h-5" />
-                        บันทึกการตั้งค่า
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-green-800 disabled:opacity-50"
+                    >
+                        {saved ? (
+                            <>
+                                <CheckCircle className="w-5 h-5" />
+                                บันทึกสำเร็จ!
+                            </>
+                        ) : saving ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                กำลังบันทึก...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="w-5 h-5" />
+                                บันทึกการตั้งค่า
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

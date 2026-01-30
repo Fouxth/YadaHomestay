@@ -5,14 +5,18 @@ import {
     LayoutDashboard,
     Bed,
     Calendar,
-    CreditCard,
+    Sparkles, // Cleaning
+    Wrench, // Maintenance
+    Users, // Customers
+    Clock, // Check-in/out
+    Wine, // Bar
+    Package, // Inventory
+    DollarSign, // Finance
+    BarChart3, // Reports
+    Settings,
+    UserCog, // Employees (changed from Users)
     LogOut,
     Menu,
-    X,
-    Wine,
-    BarChart3,
-    Users,
-    Settings,
     ChevronRight,
     Bell,
     Search
@@ -39,12 +43,17 @@ export const AdminLayout = () => {
 
     const menuItems = [
         { path: '/admin/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
-        { path: '/admin/rooms', icon: Bed, label: 'ห้องพัก' },
         { path: '/admin/bookings', icon: Calendar, label: 'การจอง' },
-        { path: '/admin/pos', icon: CreditCard, label: 'POS' },
-        { path: '/admin/bar', icon: Wine, label: 'มินิบาร์' },
+        { path: '/admin/rooms', icon: Bed, label: 'ห้องพัก' },
+        { path: '/admin/cleaning', icon: Sparkles, label: 'ทำความสะอาด' },
+        { path: '/admin/maintenance', icon: Wrench, label: 'ซ่อมบำรุง' },
+        { path: '/admin/customers', icon: Users, label: 'ลูกค้า' },
+        { path: '/admin/checkinout', icon: Clock, label: 'Check-in/out' },
+        { path: '/admin/bar', icon: Wine, label: 'บาร์ & เครื่องดื่ม' },
+        { path: '/admin/inventory', icon: Package, label: 'คลังสินค้า' },
+        { path: '/admin/finance', icon: DollarSign, label: 'การเงิน' },
         { path: '/admin/reports', icon: BarChart3, label: 'รายงาน' },
-        { path: '/admin/employees', icon: Users, label: 'พนักงาน' },
+        { path: '/admin/employees', icon: UserCog, label: 'พนักงาน' },
         { path: '/admin/settings', icon: Settings, label: 'ตั้งค่า' },
     ];
 
@@ -73,7 +82,7 @@ export const AdminLayout = () => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-3 space-y-1">
+                <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-120px)]">
                     {menuItems.map(item => (
                         <Link
                             key={item.path}

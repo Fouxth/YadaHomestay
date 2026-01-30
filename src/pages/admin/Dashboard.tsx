@@ -19,7 +19,7 @@ interface DashboardStats {
 }
 
 export const Dashboard = () => {
-  const { rooms, bookings } = useData();
+  const { rooms } = useData();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,11 +58,11 @@ export const Dashboard = () => {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-text-secondary">
-            {new Date().toLocaleDateString('th-TH', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date().toLocaleDateString('th-TH', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </span>
         </div>
@@ -159,16 +159,15 @@ export const Dashboard = () => {
             </div>
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
               {rooms.slice(0, 16).map(room => (
-                <div 
-                  key={room.id} 
+                <div
+                  key={room.id}
                   className="aspect-square rounded-lg border border-border flex flex-col items-center justify-center gap-1 hover:shadow-md transition-shadow cursor-pointer"
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    room.status === 'available' ? 'bg-available' :
+                  <div className={`w-2 h-2 rounded-full ${room.status === 'available' ? 'bg-available' :
                     room.status === 'occupied' ? 'bg-occupied' :
-                    room.status === 'cleaning' ? 'bg-cleaning' :
-                    room.status === 'maintenance' ? 'bg-maintenance' : 'bg-reserved'
-                  }`}></div>
+                      room.status === 'cleaning' ? 'bg-cleaning' :
+                        room.status === 'maintenance' ? 'bg-maintenance' : 'bg-reserved'
+                    }`}></div>
                   <span className="text-xs font-medium">{room.number}</span>
                 </div>
               ))}
@@ -242,16 +241,15 @@ export const Dashboard = () => {
                       <td>{new Date(booking.checkInDate).toLocaleDateString('th-TH')}</td>
                       <td>{new Date(booking.checkOutDate).toLocaleDateString('th-TH')}</td>
                       <td>
-                        <span className={`badge ${
-                          booking.status === 'confirmed' ? 'badge-info' :
+                        <span className={`badge ${booking.status === 'confirmed' ? 'badge-info' :
                           booking.status === 'checked_in' ? 'badge-success' :
-                          booking.status === 'checked_out' ? 'badge-secondary' :
-                          booking.status === 'cancelled' ? 'badge-danger' : 'badge-warning'
-                        }`}>
+                            booking.status === 'checked_out' ? 'badge-secondary' :
+                              booking.status === 'cancelled' ? 'badge-danger' : 'badge-warning'
+                          }`}>
                           {booking.status === 'confirmed' ? 'ยืนยันแล้ว' :
-                           booking.status === 'checked_in' ? 'Check-in' :
-                           booking.status === 'checked_out' ? 'Check-out' :
-                           booking.status === 'cancelled' ? 'ยกเลิก' : 'รอยืนยัน'}
+                            booking.status === 'checked_in' ? 'Check-in' :
+                              booking.status === 'checked_out' ? 'Check-out' :
+                                booking.status === 'cancelled' ? 'ยกเลิก' : 'รอยืนยัน'}
                         </span>
                       </td>
                     </tr>
@@ -270,3 +268,5 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+export default Dashboard;

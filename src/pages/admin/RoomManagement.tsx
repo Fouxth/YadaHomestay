@@ -1,14 +1,40 @@
-import { useState } from 'react';
-import { useData } from '../../context/DataContext';
-import { Plus, X, Search, Grid3X3, List, MoreHorizontal, Sparkles, Wrench, Bed, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, X, Search, Grid3X3, List, MoreHorizontal, Sparkles, Wrench, Bed, CheckCircle, Edit } from 'lucide-react';
+import { roomsAPI } from '../../services/api';
 import type { Room } from '../../types';
 
 export const RoomManagement = () => {
-    const { rooms, updateRoomStatus, refreshRooms } = useData();
+    const [rooms, setRooms] = useState<Room[]>([]);
     const [filter, setFilter] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        number: '',
+        name: '',
+        type: 'standard',
+        capacity: 2,
+        pricePerNight: 1000,
+        floor: 1,
+        description: '',
+        amenities: [] as string[]
+    });
+
+    useEffect(() => {
+        loadRooms();
+    }, []);
+
+    const loadRooms = async () => {
+        try {
+            const data = await roomsAPI.getAll();
+            setRooms(data);
+        } catch (error) {
+            console.error('Error loading rooms:', error);
+        }
+    };
 
     const getStatusText = (status: string) => {
         const texts: Record<string, string> = {
@@ -69,12 +95,73 @@ export const RoomManagement = () => {
 
     const handleStatusUpdate = async (roomId: string, newStatus: Room['status']) => {
         try {
-            await updateRoomStatus(roomId, newStatus);
+            setLoading(true);
+            await roomsAPI.update(roomId, { status: newStatus });
             setSelectedRoom(null);
-            await refreshRooms();
+            await loadRooms();
         } catch (error) {
             console.error('Failed to update room status:', error);
+            alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleAddRoom = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setLoading(true);
+            await roomsAPI.create(formData);
+            setShowAddModal(false);
+            setFormData({
+                number: '',
+                name: '',
+                type: 'standard',
+                capacity: 2,
+                pricePerNight: 1000,
+                floor: 1,
+                description: '',
+                amenities: []
+            });
+            await loadRooms();
+        } catch (error) {
+            console.error('Failed to create room:', error);
+            alert('เกิดข้อผิดพลาดในการเพิ่มห้อง');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditRoom = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedRoom) return;
+        try {
+            setLoading(true);
+            await roomsAPI.update(selectedRoom.id, formData);
+            setShowEditModal(false);
+            setSelectedRoom(null);
+            await loadRooms();
+        } catch (error) {
+            console.error('Failed to update room:', error);
+            alert('เกิดข้อผิดพลาดในการแก้ไขห้อง');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const openEditModal = (room: Room) => {
+        setFormData({
+            number: room.number,
+            name: room.name,
+            type: room.type,
+            capacity: room.capacity,
+            pricePerNight: room.pricePerNight,
+            floor: room.floor,
+            description: room.description || '',
+            amenities: room.amenities || []
+        });
+        setSelectedRoom(room);
+        setShowEditModal(true);
     };
 
     return (
@@ -85,7 +172,22 @@ export const RoomManagement = () => {
                     <h1 className="page-title">จัดการห้องพัก</h1>
                     <p className="page-subtitle">ดูและจัดการสถานะห้องพักทุกห้อง</p>
                 </div>
-                <button className="btn-primary">
+                <button
+                    onClick={() => {
+                        setFormData({
+                            number: '',
+                            name: '',
+                            type: 'standard',
+                            capacity: 2,
+                            pricePerNight: 1000,
+                            floor: 1,
+                            description: '',
+                            amenities: []
+                        });
+                        setShowAddModal(true);
+                    }}
+                    className="btn-primary"
+                >
                     <Plus className="w-4 h-4" />
                     เพิ่มห้องพัก
                 </button>
@@ -220,7 +322,7 @@ export const RoomManagement = () => {
             )}
 
             {/* Room Detail Modal */}
-            {selectedRoom && (
+            {selectedRoom && !showEditModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-surface rounded-xl shadow-xl w-full max-w-md">
                         <div className="p-6 border-b border-border flex items-center justify-between">
@@ -266,7 +368,8 @@ export const RoomManagement = () => {
                                     {selectedRoom.status !== 'available' && (
                                         <button
                                             onClick={() => handleStatusUpdate(selectedRoom.id, 'available')}
-                                            className="btn-secondary text-sm"
+                                            disabled={loading}
+                                            className="btn-primary bg-success hover:bg-success/90 text-sm disabled:opacity-50"
                                         >
                                             <CheckCircle className="w-4 h-4" />
                                             ว่าง
@@ -275,7 +378,8 @@ export const RoomManagement = () => {
                                     {selectedRoom.status !== 'cleaning' && (
                                         <button
                                             onClick={() => handleStatusUpdate(selectedRoom.id, 'cleaning')}
-                                            className="btn-secondary text-sm"
+                                            disabled={loading}
+                                            className="btn-primary bg-warning hover:bg-warning/90 text-sm disabled:opacity-50"
                                         >
                                             <Sparkles className="w-4 h-4" />
                                             ทำความสะอาด
@@ -284,7 +388,8 @@ export const RoomManagement = () => {
                                     {selectedRoom.status !== 'maintenance' && (
                                         <button
                                             onClick={() => handleStatusUpdate(selectedRoom.id, 'maintenance')}
-                                            className="btn-secondary text-sm"
+                                            disabled={loading}
+                                            className="btn-primary bg-danger hover:bg-danger/90 text-sm disabled:opacity-50"
                                         >
                                             <Wrench className="w-4 h-4" />
                                             ซ่อมบำรุง
@@ -293,7 +398,8 @@ export const RoomManagement = () => {
                                     {selectedRoom.status !== 'occupied' && (
                                         <button
                                             onClick={() => handleStatusUpdate(selectedRoom.id, 'occupied')}
-                                            className="btn-secondary text-sm"
+                                            disabled={loading}
+                                            className="btn-primary bg-occupied hover:bg-occupied/90 text-sm disabled:opacity-50"
                                         >
                                             <Bed className="w-4 h-4" />
                                             มีผู้เข้าพัก
@@ -301,7 +407,237 @@ export const RoomManagement = () => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Edit Button */}
+                            <button
+                                onClick={() => openEditModal(selectedRoom)}
+                                className="btn-secondary w-full"
+                            >
+                                <Edit className="w-4 h-4" />
+                                แก้ไขห้องพัก
+                            </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Room Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
+                        <div className="p-6 border-b border-border flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">เพิ่มห้องพักใหม่</h3>
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddRoom} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">หมายเลขห้อง *</label>
+                                    <input
+                                        required
+                                        className="input"
+                                        placeholder="เช่น 101"
+                                        value={formData.number}
+                                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ชื่อห้อง *</label>
+                                    <input
+                                        required
+                                        className="input"
+                                        placeholder="เช่น ห้องมาตรฐาน 101"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ประเภท</label>
+                                    <select
+                                        className="input"
+                                        value={formData.type}
+                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    >
+                                        <option value="standard">มาตรฐาน</option>
+                                        <option value="deluxe">ดีลักซ์</option>
+                                        <option value="family">แฟมิลี่</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ความจุ (ท่าน)</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        min="1"
+                                        value={formData.capacity}
+                                        onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ราคา/คืน (บาท)</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        min="0"
+                                        value={formData.pricePerNight}
+                                        onChange={(e) => setFormData({ ...formData, pricePerNight: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ชั้น</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        min="1"
+                                        value={formData.floor}
+                                        onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-1.5">รายละเอียด</label>
+                                <textarea
+                                    className="input min-h-[80px] resize-none"
+                                    placeholder="รายละเอียดเพิ่มเติม..."
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddModal(false)}
+                                    className="btn-secondary"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="btn-primary disabled:opacity-50"
+                                >
+                                    {loading ? 'กำลังบันทึก...' : 'เพิ่มห้อง'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Room Modal */}
+            {showEditModal && selectedRoom && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
+                        <div className="p-6 border-b border-border flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">แก้ไขห้อง {selectedRoom.number}</h3>
+                            <button
+                                onClick={() => { setShowEditModal(false); setSelectedRoom(null); }}
+                                className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditRoom} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">หมายเลขห้อง *</label>
+                                    <input
+                                        required
+                                        className="input"
+                                        value={formData.number}
+                                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ชื่อห้อง *</label>
+                                    <input
+                                        required
+                                        className="input"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ประเภท</label>
+                                    <select
+                                        className="input"
+                                        value={formData.type}
+                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    >
+                                        <option value="standard">มาตรฐาน</option>
+                                        <option value="deluxe">ดีลักซ์</option>
+                                        <option value="family">แฟมิลี่</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ความจุ (ท่าน)</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        min="1"
+                                        value={formData.capacity}
+                                        onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ราคา/คืน (บาท)</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        min="0"
+                                        value={formData.pricePerNight}
+                                        onChange={(e) => setFormData({ ...formData, pricePerNight: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ชั้น</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        min="1"
+                                        value={formData.floor}
+                                        onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-1.5">รายละเอียด</label>
+                                <textarea
+                                    className="input min-h-[80px] resize-none"
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowEditModal(false); setSelectedRoom(null); }}
+                                    className="btn-secondary"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="btn-primary disabled:opacity-50"
+                                >
+                                    {loading ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

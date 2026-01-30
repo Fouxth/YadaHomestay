@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { getUsers, getUser, createUser, updateUser, deleteUser, updateProfile } from '../controllers/user.controller';
-import { authenticateToken, requireAdmin } from '../middleware/auth.middleware';
+import { authenticateToken, requireRole } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Protected routes
-router.get('/', authenticateToken, requireAdmin, getUsers);
-router.get('/:id', authenticateToken, getUser);
-router.post('/', authenticateToken, requireAdmin, createUser);
-router.put('/:id', authenticateToken, requireAdmin, updateUser);
-router.delete('/:id', authenticateToken, requireAdmin, deleteUser);
+// Protected routes - allow both admin and staff to view users
+router.get('/', authenticateToken, requireRole('admin', 'staff'), getUsers);
+router.get('/:id', authenticateToken, requireRole('admin', 'staff'), getUser);
+router.post('/', authenticateToken, requireRole('admin'), createUser);
+router.put('/:id', authenticateToken, requireRole('admin'), updateUser);
+router.delete('/:id', authenticateToken, requireRole('admin'), deleteUser);
 
 // Profile update (for current user)
 router.put('/profile/update', authenticateToken, updateProfile);

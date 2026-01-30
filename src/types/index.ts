@@ -9,6 +9,7 @@ export interface Room {
     amenities: string[];
     floor: number;
     image: string;
+    description?: string;
 }
 
 export interface Booking {

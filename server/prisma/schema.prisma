@@ -18,7 +18,15 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
   auditLogs AuditLog[]
+  
+  // Relations
+  cleaningTasks    CleaningTask[]  @relation("CleaningAssigned")
+  maintenanceTasks MaintenanceTask[] @relation("MaintenanceAssigned")
+  stockMovements   StockMovement[]
+  transactions     Transaction[]
+  checkIns         CheckInOut[]
 }
 
 model Room {
@@ -32,9 +40,14 @@ model Room {
   amenities     String    // Stored as JSON string or comma separated
   floor         Int
   image         String?
-  bookings      Booking[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  bookings         Booking[]
+  checkIns         CheckInOut[]
+  cleaningTasks    CleaningTask[]
+  maintenanceTasks MaintenanceTask[]
 }
 
 model Booking {
@@ -48,14 +61,18 @@ model Booking {
   roomId        String
   room          Room     @relation(fields: [roomId], references: [id])
   
+  // Optional link to registered customer
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  
   checkInDate   DateTime
   checkOutDate  DateTime
   nights        Int
   adults        Int
   children      Int
   
-  status        String   @default("pending") // 'pending', 'confirmed', ...
-  paymentStatus String   @default("pending") // 'pending', 'paid', ...
+  status        String   @default("pending") // 'pending', 'confirmed', 'checked-in', 'checked-out', 'cancelled'
+  paymentStatus String   @default("pending") // 'pending', 'paid', 'refunded'
   
   roomPrice     Float
   totalAmount   Float
@@ -63,6 +80,53 @@ model Booking {
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  
+  // Relations
+  checkIns      CheckInOut[]
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  code          String    @unique  // CUS-0001
+  firstName     String
+  lastName      String
+  phone         String
+  email         String?
+  idCard        String?   // เลขบัตรประชาชน/Passport
+  nationality   String    @default("Thai")
+  address       String?
+  notes         String?
+  totalVisits   Int       @default(0)
+  totalSpent    Float     @default(0)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  bookings      Booking[]
+  checkIns      CheckInOut[]
+}
+
+model CheckInOut {
+  id            String    @id @default(uuid())
+  
+  bookingId     String
+  booking       Booking   @relation(fields: [bookingId], references: [id])
+  
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  
+  roomId        String
+  room          Room      @relation(fields: [roomId], references: [id])
+  
+  type          String    // 'check-in' | 'check-out'
+  datetime      DateTime  @default(now())
+  
+  staffId       String
+  staff         User      @relation(fields: [staffId], references: [id])
+  
+  notes         String?
+  createdAt     DateTime  @default(now())
 }
 
 model Product {
@@ -74,9 +138,12 @@ model Product {
   stock     Int
   unit      String
   isActive  Boolean     @default(true)
-  orderItems OrderItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  
+  // Relations
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
 }
 
 model Order {
@@ -111,6 +178,99 @@ model OrderItem {
   productName String
   price       Float
   quantity    Int
+}
+
+model CleaningTask {
+  id            String    @id @default(uuid())
+  roomId        String
+  room          Room      @relation(fields: [roomId], references: [id])
+  
+  type          String    // 'checkout' | 'routine' | 'deep'
+  status        String    @default("pending") // 'pending' | 'in-progress' | 'completed'
+  priority      String    @default("normal") // 'low' | 'normal' | 'high' | 'urgent'
+  notes         String?
+  
+  assignedToId  String?
+  assignedTo    User?     @relation("CleaningAssigned", fields: [assignedToId], references: [id])
+  
+  startedAt     DateTime?
+  completedAt   DateTime?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model MaintenanceTask {
+  id            String    @id @default(uuid())
+  roomId        String?
+  room          Room?     @relation(fields: [roomId], references: [id])
+  
+  location      String?   // หากไม่ใช่ห้องพัก เช่น "Lobby", "Pool"
+  title         String
+  description   String?
+  category      String    // 'electrical' | 'plumbing' | 'ac' | 'furniture' | 'general'
+  
+  status        String    @default("pending") // 'pending' | 'in-progress' | 'completed' | 'cancelled'
+  priority      String    @default("normal")
+  
+  estimatedCost Float?
+  actualCost    Float?
+  
+  assignedToId  String?
+  assignedTo    User?     @relation("MaintenanceAssigned", fields: [assignedToId], references: [id])
+  
+  startedAt     DateTime?
+  completedAt   DateTime?
+  
+  images        String?   // JSON array of image URLs
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model StockMovement {
+  id            String    @id @default(uuid())
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  
+  type          String    // 'in' | 'out' | 'adjustment'
+  quantity      Int
+  reason        String    // 'purchase' | 'sale' | 'damaged' | 'expired' | 'adjustment' | 'transfer'
+  reference     String?   // Order ID, Purchase ID, etc.
+  notes         String?
+  
+  staffId       String
+  staff         User      @relation(fields: [staffId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+}
+
+model Transaction {
+  id            String    @id @default(uuid())
+  code          String    @unique  // TXN-0001
+  type          String    // 'income' | 'expense'
+  category      String    // 'room' | 'bar' | 'service' | 'salary' | 'utility' | 'maintenance' | 'supplies' | 'other'
+  amount        Float
+  paymentMethod String    // 'cash' | 'transfer' | 'credit'
+  reference     String?   // Booking ID, Order ID, etc.
+  description   String?
+  date          DateTime  @default(now())
+  
+  staffId       String
+  staff         User      @relation(fields: [staffId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Setting {
+  id            String    @id @default(uuid())
+  key           String    @unique
+  value         String
+  type          String    @default("string") // 'string' | 'number' | 'boolean' | 'json'
+  category      String    @default("general") // 'general' | 'booking' | 'payment' | 'notification'
+  description   String?
+  updatedAt     DateTime  @updatedAt
 }
 
 model AuditLog {

@@ -1,13 +1,45 @@
-import { useState } from 'react';
-import { useData } from '../../context/DataContext';
-import { Plus, Search, Calendar, X, ChevronDown, Filter, MoreHorizontal, CheckCircle, XCircle, User, Phone, Mail } from 'lucide-react';
-import type { Booking } from '../../types';
+import { useState, useEffect } from 'react';
+import { Plus, Search, Calendar, X, ChevronDown, Filter, MoreHorizontal, CheckCircle, XCircle, User, Phone, Mail, Home, Moon } from 'lucide-react';
+import { bookingsAPI, roomsAPI } from '../../services/api';
+import type { Booking, Room } from '../../types';
 
 export const BookingManagement = () => {
-    const { bookings, updateBookingStatus } = useData();
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [rooms, setRooms] = useState<Room[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+    const [showWalkInModal, setShowWalkInModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [walkInData, setWalkInData] = useState({
+        roomId: '',
+        guestName: '',
+        guestPhone: '',
+        guestEmail: '',
+        checkInDate: new Date().toISOString().split('T')[0],
+        checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+        adults: 1,
+        children: 0,
+        paymentMethod: 'cash',
+        paidAmount: 0
+    });
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const [bookingsData, roomsData] = await Promise.all([
+                bookingsAPI.getAll(),
+                roomsAPI.getAll()
+            ]);
+            setBookings(bookingsData);
+            setRooms(roomsData);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    };
 
     const getStatusText = (status: string) => {
         const texts: Record<string, string> = {
@@ -50,11 +82,73 @@ export const BookingManagement = () => {
 
     const handleStatusChange = async (bookingId: string, newStatus: Booking['status']) => {
         try {
-            await updateBookingStatus(bookingId, newStatus);
+            setLoading(true);
+            await bookingsAPI.update(bookingId, { status: newStatus });
             setSelectedBooking(null);
+            await loadData();
         } catch (error) {
             console.error('Failed to update booking status:', error);
+            alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleWalkIn = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!walkInData.roomId) {
+            alert('กรุณาเลือกห้อง');
+            return;
+        }
+        try {
+            setLoading(true);
+            const room = rooms.find(r => r.id === walkInData.roomId);
+            const checkIn = new Date(walkInData.checkInDate);
+            const checkOut = new Date(walkInData.checkOutDate);
+            const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+            const totalAmount = room ? room.pricePerNight * nights : 0;
+
+            await bookingsAPI.create({
+                ...walkInData,
+                nights,
+                totalAmount,
+                roomNumber: room?.number || '',
+                status: 'checked_in' // Walk-in = instant check-in
+            });
+
+            setShowWalkInModal(false);
+            setWalkInData({
+                roomId: '',
+                guestName: '',
+                guestPhone: '',
+                guestEmail: '',
+                checkInDate: new Date().toISOString().split('T')[0],
+                checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+                adults: 1,
+                children: 0,
+                paymentMethod: 'cash',
+                paidAmount: 0
+            });
+            await loadData();
+        } catch (error) {
+            console.error('Failed to create walk-in booking:', error);
+            alert('เกิดข้อผิดพลาดในการสร้างการจอง');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const availableRooms = rooms.filter(r => r.status === 'available');
+
+    const calculateNights = () => {
+        const checkIn = new Date(walkInData.checkInDate);
+        const checkOut = new Date(walkInData.checkOutDate);
+        return Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
+    };
+
+    const calculateTotal = () => {
+        const room = rooms.find(r => r.id === walkInData.roomId);
+        return room ? room.pricePerNight * calculateNights() : 0;
     };
 
     return (
@@ -65,7 +159,10 @@ export const BookingManagement = () => {
                     <h1 className="page-title">การจองทั้งหมด</h1>
                     <p className="page-subtitle">จัดการและดูรายละเอียดการจอง</p>
                 </div>
-                <button className="btn-primary">
+                <button
+                    onClick={() => setShowWalkInModal(true)}
+                    className="btn-primary"
+                >
                     <Plus className="w-4 h-4" />
                     รับจอง Walk-in
                 </button>
@@ -74,17 +171,17 @@ export const BookingManagement = () => {
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {[
-                    { key: 'all', label: 'ทั้งหมด', count: statusCounts.all },
-                    { key: 'pending', label: 'รอยืนยัน', count: statusCounts.pending },
-                    { key: 'confirmed', label: 'ยืนยันแล้ว', count: statusCounts.confirmed },
-                    { key: 'checked_in', label: 'Check-in', count: statusCounts.checked_in },
-                    { key: 'checked_out', label: 'Check-out', count: statusCounts.checked_out },
-                    { key: 'cancelled', label: 'ยกเลิก', count: statusCounts.cancelled },
+                    { key: 'all', label: 'ทั้งหมด', count: statusCounts.all, color: 'border-gray-400' },
+                    { key: 'pending', label: 'รอยืนยัน', count: statusCounts.pending, color: 'border-warning' },
+                    { key: 'confirmed', label: 'ยืนยันแล้ว', count: statusCounts.confirmed, color: 'border-info' },
+                    { key: 'checked_in', label: 'Check-in', count: statusCounts.checked_in, color: 'border-success' },
+                    { key: 'checked_out', label: 'Check-out', count: statusCounts.checked_out, color: 'border-secondary' },
+                    { key: 'cancelled', label: 'ยกเลิก', count: statusCounts.cancelled, color: 'border-danger' },
                 ].map(s => (
                     <div
                         key={s.key}
                         onClick={() => setStatusFilter(s.key)}
-                        className={`card p-4 cursor-pointer transition-all ${statusFilter === s.key ? 'ring-2 ring-accent border-accent' : ''
+                        className={`card p-4 cursor-pointer transition-all border-l-4 ${s.color} ${statusFilter === s.key ? 'ring-2 ring-accent border-accent' : ''
                             }`}
                     >
                         <p className="text-2xl font-bold text-text-primary">{s.count}</p>
@@ -279,14 +376,16 @@ export const BookingManagement = () => {
                                     <>
                                         <button
                                             onClick={() => handleStatusChange(selectedBooking.id, 'confirmed')}
-                                            className="btn-primary flex-1"
+                                            disabled={loading}
+                                            className="btn-primary bg-info hover:bg-info/90 flex-1 disabled:opacity-50"
                                         >
                                             <CheckCircle className="w-4 h-4" />
                                             ยืนยันการจอง
                                         </button>
                                         <button
                                             onClick={() => handleStatusChange(selectedBooking.id, 'cancelled')}
-                                            className="btn-danger flex-1"
+                                            disabled={loading}
+                                            className="btn-primary bg-danger hover:bg-danger/90 flex-1 disabled:opacity-50"
                                         >
                                             <XCircle className="w-4 h-4" />
                                             ยกเลิก
@@ -296,7 +395,8 @@ export const BookingManagement = () => {
                                 {selectedBooking.status === 'confirmed' && (
                                     <button
                                         onClick={() => handleStatusChange(selectedBooking.id, 'checked_in')}
-                                        className="btn-primary w-full"
+                                        disabled={loading}
+                                        className="btn-primary bg-success hover:bg-success/90 w-full disabled:opacity-50"
                                     >
                                         <CheckCircle className="w-4 h-4" />
                                         Check-in
@@ -305,7 +405,8 @@ export const BookingManagement = () => {
                                 {selectedBooking.status === 'checked_in' && (
                                     <button
                                         onClick={() => handleStatusChange(selectedBooking.id, 'checked_out')}
-                                        className="btn-primary w-full"
+                                        disabled={loading}
+                                        className="btn-primary bg-accent hover:bg-accent/90 w-full disabled:opacity-50"
                                     >
                                         <CheckCircle className="w-4 h-4" />
                                         Check-out
@@ -313,6 +414,187 @@ export const BookingManagement = () => {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Walk-in Modal */}
+            {showWalkInModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-auto">
+                        <div className="p-6 border-b border-border flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">รับจอง Walk-in</h3>
+                            <button
+                                onClick={() => setShowWalkInModal(false)}
+                                className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleWalkIn} className="p-6 space-y-4">
+                            {/* Room Selection */}
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-1.5">เลือกห้อง *</label>
+                                <select
+                                    required
+                                    className="input"
+                                    value={walkInData.roomId}
+                                    onChange={(e) => setWalkInData({ ...walkInData, roomId: e.target.value })}
+                                >
+                                    <option value="">เลือกห้องว่าง...</option>
+                                    {availableRooms.map((r) => (
+                                        <option key={r.id} value={r.id}>
+                                            {r.number} - {r.name} (฿{r.pricePerNight.toLocaleString()}/คืน)
+                                        </option>
+                                    ))}
+                                </select>
+                                {availableRooms.length === 0 && (
+                                    <p className="text-sm text-danger mt-1">ไม่มีห้องว่าง</p>
+                                )}
+                            </div>
+
+                            {/* Guest Info */}
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-1.5">ชื่อผู้เข้าพัก *</label>
+                                <input
+                                    required
+                                    className="input"
+                                    placeholder="ชื่อ-นามสกุล"
+                                    value={walkInData.guestName}
+                                    onChange={(e) => setWalkInData({ ...walkInData, guestName: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">เบอร์โทร *</label>
+                                    <input
+                                        required
+                                        className="input"
+                                        placeholder="0xx-xxx-xxxx"
+                                        value={walkInData.guestPhone}
+                                        onChange={(e) => setWalkInData({ ...walkInData, guestPhone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">อีเมล</label>
+                                    <input
+                                        type="email"
+                                        className="input"
+                                        placeholder="email@example.com"
+                                        value={walkInData.guestEmail}
+                                        onChange={(e) => setWalkInData({ ...walkInData, guestEmail: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Dates */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">วัน Check-in</label>
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        value={walkInData.checkInDate}
+                                        onChange={(e) => setWalkInData({ ...walkInData, checkInDate: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">วัน Check-out</label>
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        value={walkInData.checkOutDate}
+                                        min={walkInData.checkInDate}
+                                        onChange={(e) => setWalkInData({ ...walkInData, checkOutDate: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Guests */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">ผู้ใหญ่</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        className="input"
+                                        value={walkInData.adults}
+                                        onChange={(e) => setWalkInData({ ...walkInData, adults: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-text-secondary mb-1.5">เด็ก</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="input"
+                                        value={walkInData.children}
+                                        onChange={(e) => setWalkInData({ ...walkInData, children: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Payment */}
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-1.5">วิธีชำระเงิน</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['cash', 'transfer', 'credit'].map((method) => (
+                                        <button
+                                            key={method}
+                                            type="button"
+                                            onClick={() => setWalkInData({ ...walkInData, paymentMethod: method })}
+                                            className={`py-2 px-3 rounded-lg text-sm font-medium border transition-all ${walkInData.paymentMethod === method
+                                                ? 'border-accent bg-accent/10 text-accent'
+                                                : 'border-border text-text-secondary hover:border-accent/50'
+                                                }`}
+                                        >
+                                            {method === 'cash' ? 'เงินสด' :
+                                                method === 'transfer' ? 'โอนเงิน' : 'บัตรเครดิต'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Summary */}
+                            {walkInData.roomId && (
+                                <div className="p-4 bg-accent/5 rounded-xl border border-accent/20">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <Home className="w-5 h-5 text-accent" />
+                                        <span className="font-medium">
+                                            {rooms.find(r => r.id === walkInData.roomId)?.number} - {rooms.find(r => r.id === walkInData.roomId)?.name}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm mb-2">
+                                        <span className="flex items-center gap-2 text-text-secondary">
+                                            <Moon className="w-4 h-4" />
+                                            {calculateNights()} คืน
+                                        </span>
+                                        <span>฿{rooms.find(r => r.id === walkInData.roomId)?.pricePerNight.toLocaleString()}/คืน</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-accent/20">
+                                        <span className="font-medium">ยอดรวม</span>
+                                        <span className="text-xl font-bold text-accent">฿{calculateTotal().toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowWalkInModal(false)}
+                                    className="btn-secondary"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading || availableRooms.length === 0}
+                                    className="btn-primary disabled:opacity-50"
+                                >
+                                    {loading ? 'กำลังบันทึก...' : 'Check-in ทันที'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

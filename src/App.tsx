@@ -18,6 +18,14 @@ import { Reports } from './pages/admin/Reports';
 import { Employees } from './pages/admin/Employees';
 import { Settings } from './pages/admin/Settings';
 
+// New Pages
+import Cleaning from './pages/admin/Cleaning';
+import Maintenance from './pages/admin/Maintenance';
+import Customers from './pages/admin/Customers';
+import CheckInOut from './pages/admin/CheckInOut';
+import Inventory from './pages/admin/Inventory';
+import Finance from './pages/admin/Finance';
+
 function App() {
   return (
     <Router>
@@ -38,8 +46,16 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="rooms" element={<RoomManagement />} />
             <Route path="bookings" element={<BookingManagement />} />
-            <Route path="pos" element={<POS />} />
+            <Route path="pos" element={<POS />} /> {/* Optional, keeping it */}
+
+            <Route path="cleaning" element={<Cleaning />} />
+            <Route path="maintenance" element={<Maintenance />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="checkinout" element={<CheckInOut />} />
             <Route path="bar" element={<Bar />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="finance" element={<Finance />} />
+
             <Route path="reports" element={<Reports />} />
             <Route path="employees" element={<Employees />} />
             <Route path="settings" element={<Settings />} />

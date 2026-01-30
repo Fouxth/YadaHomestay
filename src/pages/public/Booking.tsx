@@ -34,8 +34,8 @@ export const Booking = () => {
     useEffect(() => {
         // When dates change, update available rooms if we are on step 2
         if (dates.checkIn && dates.checkOut && step === 2) {
-            const available = getAvailableRooms(dates.checkIn, dates.checkOut, guests.adults + guests.children);
-            setAvailableRooms(available);
+            getAvailableRooms(dates.checkIn, dates.checkOut, guests.adults + guests.children)
+                .then(available => setAvailableRooms(available));
         }
     }, [dates, guests, step, getAvailableRooms]);
 
@@ -49,9 +49,11 @@ export const Booking = () => {
                 alert('วันที่ออกต้องมากกว่าวันที่เข้าพัก');
                 return;
             }
-            const available = getAvailableRooms(dates.checkIn, dates.checkOut, guests.adults + guests.children);
-            setAvailableRooms(available);
-            setStep(2);
+            getAvailableRooms(dates.checkIn, dates.checkOut, guests.adults + guests.children)
+                .then(available => {
+                    setAvailableRooms(available);
+                    setStep(2);
+                });
         } else if (step === 2) {
             if (!selectedRoom) {
                 alert('กรุณาเลือกห้องพัก');
