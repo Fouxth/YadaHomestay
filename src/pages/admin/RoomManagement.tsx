@@ -158,7 +158,7 @@ export const RoomManagement = () => {
             pricePerNight: room.pricePerNight,
             floor: room.floor,
             description: room.description || '',
-            amenities: room.amenities || []
+            amenities: Array.isArray(room.amenities) ? room.amenities : []
         });
         setSelectedRoom(room);
         setShowEditModal(true);
@@ -512,6 +512,29 @@ export const RoomManagement = () => {
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </div>
+                            {/* Amenities Selection */}
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-2">สิ่งอำนวยความสะดวก</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'เตียงคู่', 'ระเบียง', 'อ่างอาบน้ำ', 'ไดร์เป่าผม'].map(amenity => (
+                                        <label key={amenity} className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-hover cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.amenities.includes(amenity)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setFormData({ ...formData, amenities: [...formData.amenities, amenity] });
+                                                    } else {
+                                                        setFormData({ ...formData, amenities: formData.amenities.filter(a => a !== amenity) });
+                                                    }
+                                                }}
+                                                className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
+                                            />
+                                            <span className="text-sm">{amenity}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                             <div className="flex justify-end gap-3 pt-4 border-t border-border">
                                 <button
                                     type="button"
@@ -620,6 +643,29 @@ export const RoomManagement = () => {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 />
+                            </div>
+                            {/* Amenities Selection */}
+                            <div>
+                                <label className="block text-sm text-text-secondary mb-2">สิ่งอำนวยความสะดวก</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['แอร์', 'ทีวี', 'ตู้เย็น', 'ไวไฟ', 'เตียงคู่', 'ระเบียง', 'อ่างอาบน้ำ', 'ไดร์เป่าผม'].map(amenity => (
+                                        <label key={amenity} className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-hover cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.amenities.includes(amenity)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setFormData({ ...formData, amenities: [...formData.amenities, amenity] });
+                                                    } else {
+                                                        setFormData({ ...formData, amenities: formData.amenities.filter(a => a !== amenity) });
+                                                    }
+                                                }}
+                                                className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
+                                            />
+                                            <span className="text-sm">{amenity}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t border-border">
                                 <button

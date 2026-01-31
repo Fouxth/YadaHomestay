@@ -6,6 +6,9 @@ import { PublicLayout } from './layouts/PublicLayout';
 import { Home } from './pages/public/Home';
 import { Booking } from './pages/public/Booking';
 import { Contact } from './pages/public/Contact';
+import { BookingStatus } from './pages/public/BookingStatus';
+import { Gallery } from './pages/public/Gallery';
+import { About } from './pages/public/About';
 
 import { AdminLayout } from './layouts/AdminLayout';
 import { AdminLogin } from './pages/admin/Login';
@@ -25,6 +28,7 @@ import Customers from './pages/admin/Customers';
 import CheckInOut from './pages/admin/CheckInOut';
 import Inventory from './pages/admin/Inventory';
 import Finance from './pages/admin/Finance';
+import PaymentVerification from './pages/admin/PaymentVerification';
 
 function App() {
   return (
@@ -35,6 +39,9 @@ function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/booking" element={<Booking />} />
+            <Route path="/booking-status" element={<BookingStatus />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
           </Route>
 
@@ -55,6 +62,7 @@ function App() {
             <Route path="bar" element={<Bar />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="finance" element={<Finance />} />
+            <Route path="payments" element={<PaymentVerification />} />
 
             <Route path="reports" element={<Reports />} />
             <Route path="employees" element={<Employees />} />

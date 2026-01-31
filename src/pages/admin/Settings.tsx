@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Home, Bell, CreditCard, Clock, Upload, CheckCircle } from 'lucide-react';
+import { Save, Home, Bell, CreditCard, Clock, Upload, CheckCircle, Plus, Trash, QrCode, Building, X } from 'lucide-react';
 import { settingsAPI } from '../../services/api';
 
 type Tab = 'general' | 'notifications' | 'payments';
@@ -20,6 +20,18 @@ interface SettingsData {
     acceptCard: boolean;
     acceptTransfer: boolean;
     depositAmount: string;
+    // Payment Config
+    promptPayNumber: string;
+    promptPayName: string;
+    promptPayQrImage: string;
+    bankAccounts: BankAccount[];
+}
+
+interface BankAccount {
+    id: string;
+    bank: string;
+    name: string;
+    number: string;
 }
 
 export const Settings = () => {
@@ -44,8 +56,24 @@ export const Settings = () => {
         acceptCash: true,
         acceptCard: true,
         acceptTransfer: true,
-        depositAmount: '500'
+        depositAmount: '500',
+        promptPayNumber: '081-234-5678',
+        promptPayName: 'ญาดาโฮมสเตย์',
+        promptPayQrImage: '',
+        bankAccounts: []
     });
+
+    const [isAddBankModalOpen, setIsAddBankModalOpen] = useState(false);
+    const [newBank, setNewBank] = useState<Partial<BankAccount>>({ bank: 'kbank', name: '', number: '' });
+
+    const bankOptions = [
+        { code: 'kbank', name: 'ธนาคารกสิกรไทย', color: 'bg-green-600' },
+        { code: 'scb', name: 'ธนาคารไทยพาณิชย์', color: 'bg-purple-600' },
+        { code: 'ktb', name: 'ธนาคารกรุงไทย', color: 'bg-blue-400' },
+        { code: 'bbl', name: 'ธนาคารกรุงเทพ', color: 'bg-blue-800' },
+        { code: 'ttb', name: 'ธนาคารทหารไทยธนชาต', color: 'bg-blue-600' },
+        { code: 'gsb', name: 'ธนาคารออมสิน', color: 'bg-pink-500' },
+    ];
 
     // Load settings from API
     useEffect(() => {
@@ -62,6 +90,16 @@ export const Settings = () => {
                 data.forEach((item: { key: string; value: any }) => {
                     settingsObj[item.key] = item.value;
                 });
+
+                // Ensure bankAccounts is an array if it comes as string or undefined
+                if (typeof settingsObj.bankAccounts === 'string') {
+                    try {
+                        settingsObj.bankAccounts = JSON.parse(settingsObj.bankAccounts);
+                    } catch (e) {
+                        settingsObj.bankAccounts = [];
+                    }
+                }
+
                 setSettings(prev => ({ ...prev, ...settingsObj }));
             }
         } catch (error) {
@@ -86,6 +124,26 @@ export const Settings = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const addBankAccount = () => {
+        if (!newBank.name || !newBank.number) {
+            alert('กรุณากรอกชื่อบัญชีและเลขบัญชี');
+            return;
+        }
+        const account: BankAccount = {
+            id: Date.now().toString(),
+            bank: newBank.bank || 'kbank',
+            name: newBank.name,
+            number: newBank.number
+        };
+        setSettings(prev => ({ ...prev, bankAccounts: [...prev.bankAccounts, account] }));
+        setNewBank({ bank: 'kbank', name: '', number: '' });
+        setIsAddBankModalOpen(false);
+    };
+
+    const removeBankAccount = (id: string) => {
+        setSettings(prev => ({ ...prev, bankAccounts: prev.bankAccounts.filter(acc => acc.id !== id) }));
     };
 
     const updateSetting = (key: keyof SettingsData, value: any) => {
@@ -263,38 +321,192 @@ export const Settings = () => {
                 )}
 
                 {activeTab === 'payments' && (
-                    <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <CreditCard className="w-5 h-5 text-gray-600" />
-                            <h2 className="font-bold text-gray-800">การชำระเงิน</h2>
+                    <div className="space-y-6">
+                        {/* 1. Payment Methods */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-center gap-2 mb-6">
+                                <CreditCard className="w-5 h-5 text-gray-600" />
+                                <h2 className="font-bold text-gray-800">วิธีการชำระเงิน</h2>
+                            </div>
+                            <div className="space-y-4">
+                                {[
+                                    { key: 'acceptCash', label: 'เงินสด' },
+                                    { key: 'acceptCard', label: 'บัตรเครดิต/เดบิต' },
+                                    { key: 'acceptTransfer', label: 'โอนเงิน' },
+                                    { key: 'acceptPromptPay', label: 'PromptPay' },
+                                ].map((item) => (
+                                    <div key={item.key} className="flex items-center justify-between py-2">
+                                        <p className="font-medium text-gray-700">{item.label}</p>
+                                        <Toggle
+                                            enabled={(settings as any)[item.key] !== false} // Default true
+                                            onChange={(v) => updateSetting(item.key as keyof SettingsData, v)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {[
-                            { key: 'acceptCash', label: 'รับชำระเงินสด', desc: 'อนุญาตให้ชำระด้วยเงินสด' },
-                            { key: 'acceptCard', label: 'รับชำระบัตรเครดิต/เดบิต', desc: 'อนุญาตให้ชำระด้วยบัตร' },
-                            { key: 'acceptTransfer', label: 'รับชำระโอน/พร้อมเพย์', desc: 'อนุญาตให้ชำระด้วยการโอนเงิน' },
-                        ].map((item) => (
-                            <div key={item.key} className="flex items-center justify-between py-3 border-b">
-                                <div>
-                                    <p className="font-medium text-gray-800">{item.label}</p>
-                                    <p className="text-sm text-gray-500">{item.desc}</p>
-                                </div>
-                                <Toggle
-                                    enabled={settings[item.key as keyof SettingsData] as boolean}
-                                    onChange={(v) => updateSetting(item.key as keyof SettingsData, v)}
-                                />
+                        {/* 2. PromptPay Config */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-center gap-2 mb-6">
+                                <QrCode className="w-5 h-5 text-gray-600" />
+                                <h2 className="font-bold text-gray-800">PromptPay / QR Code</h2>
                             </div>
-                        ))}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">หมายเลข PromptPay</label>
+                                    <input
+                                        type="text"
+                                        value={settings.promptPayNumber || ''}
+                                        onChange={e => updateSetting('promptPayNumber', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="08X-XXX-XXXX"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อบัญชี PromptPay</label>
+                                    <input
+                                        type="text"
+                                        value={settings.promptPayName || ''}
+                                        onChange={e => updateSetting('promptPayName', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="ชื่อ-นามสกุล"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">URL รูป QR Code (ถ้ามี)</label>
+                                    <input
+                                        type="text"
+                                        value={settings.promptPayQrImage || ''}
+                                        onChange={e => updateSetting('promptPayQrImage', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="https://example.com/qr-code.png"
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                        <div className="pt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">ค่ามัดจำ (บาท)</label>
-                            <input
-                                type="number"
-                                value={settings.depositAmount}
-                                onChange={e => updateSetting('depositAmount', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                            />
-                            <p className="text-sm text-gray-400 mt-2">จำนวนเงินมัดจำที่ต้องการเก็บตอน Check-in</p>
+                        {/* 3. Bank Accounts */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-2">
+                                    <Building className="w-5 h-5 text-gray-600" />
+                                    <h2 className="font-bold text-gray-800">บัญชีธนาคาร</h2>
+                                </div>
+                                <button
+                                    onClick={() => setIsAddBankModalOpen(true)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-700"
+                                >
+                                    <Plus className="w-4 h-4" /> เพิ่มบัญชี
+                                </button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {settings.bankAccounts && settings.bankAccounts.length > 0 ? (
+                                    settings.bankAccounts.map((acc, index) => {
+                                        const bank = bankOptions.find(b => b.code === acc.bank);
+                                        return (
+                                            <div key={acc.id || index} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors bg-gray-50">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs ${bank?.color || 'bg-gray-400'}`}>
+                                                        {acc.bank.toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-gray-800">{acc.bank === 'scb' ? 'ธนาคารไทยพาณิชย์' : (bank?.name || acc.bank)}</p>
+                                                        <p className="text-sm text-gray-500">{acc.number} - {acc.name}</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeBankAccount(acc.id)}
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
+                                        <Building className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                        <p>ยังไม่มีบัญชีธนาคาร</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 4. Receipt Preview */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-center gap-2 mb-6">
+                                <p className="font-bold text-gray-800">ตัวอย่างใบเสร็จ</p>
+                            </div>
+                            <div className="border border-gray-200 rounded-xl p-8 max-w-sm mx-auto bg-white shadow-sm">
+                                <div className="text-center">
+                                    <h3 className="text-xl font-bold text-gray-800 mb-1">{settings.homestayName}</h3>
+                                    <p className="text-sm text-gray-500 mb-4">{settings.promptPayName || 'Yada Hospitality'}</p>
+                                    <p className="text-xs text-gray-400 mb-1">{settings.address}</p>
+                                    <p className="text-xs text-gray-400">โทร: {settings.phone}</p>
+                                    <p className="text-xs text-gray-400">เลขประจำตัวผู้เสียภาษี: 1234567890123</p>
+                                    <div className="my-4 border-t border-dashed border-gray-300"></div>
+                                    <p className="text-xs text-gray-400 mb-2">--- ข้อมูลจะปรากฏในใบเสร็จ ---</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Add Bank Modal */}
+                {isAddBankModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                                <h3 className="font-bold text-gray-800">เพิ่มบัญชีธนาคาร</h3>
+                                <button
+                                    onClick={() => setIsAddBankModalOpen(false)}
+                                    className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-500"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">ธนาคาร</label>
+                                    <select
+                                        value={newBank.bank}
+                                        onChange={e => setNewBank({ ...newBank, bank: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent appearance-none bg-white"
+                                    >
+                                        {bankOptions.map(option => (
+                                            <option key={option.code} value={option.code}>{option.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อบัญชี</label>
+                                    <input
+                                        type="text"
+                                        value={newBank.name}
+                                        onChange={e => setNewBank({ ...newBank, name: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="เช่น นายใจดี มีตังค์"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">เลขบัญชี</label>
+                                    <input
+                                        type="text"
+                                        value={newBank.number}
+                                        onChange={e => setNewBank({ ...newBank, number: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="XXX-X-XXXXX-X"
+                                    />
+                                </div>
+                                <button
+                                    onClick={addBankAccount}
+                                    className="w-full py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-700"
+                                >
+                                    + เพิ่มบัญชี
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

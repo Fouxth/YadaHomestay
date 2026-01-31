@@ -61,10 +61,10 @@ export const Navbar = () => {
     };
 
     const navLinks = [
-        { id: 'about', label: 'เกี่ยวกับเรา' },
-        { id: 'rooms', label: 'ห้องพัก' },
-        { id: 'gallery', label: 'แกลเลอรี่' },
-        { id: 'contact', label: 'ติดต่อ' },
+        { id: 'about', label: 'เกี่ยวกับเรา', path: '/about' },
+        { id: 'rooms', label: 'ห้องพัก', hash: 'rooms' }, // Homepage section
+        { id: 'gallery', label: 'แกลเลอรี่', path: '/gallery' },
+        { id: 'contact', label: 'ติดต่อ', path: '/contact' },
     ];
 
     // Check if not on homepage - always show colored navbar
@@ -90,22 +90,29 @@ export const Navbar = () => {
                     </Link>
                     <div className="hidden md:flex items-center gap-8">
                         {navLinks.map((link) => (
-                            <a
-                                key={link.id}
-                                href={`#${link.id}`}
-                                onClick={(e) => scrollToSection(e, link.id)}
-                                className={`relative text-white/90 hover:text-white transition-all duration-300 cursor-pointer py-2 ${activeSection === link.id ? 'text-white' : ''
-                                    }`}
-                            >
-                                {link.label}
-                                <span
-                                    className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[#C2A97E] rounded-full transition-all duration-300 ${activeSection === link.id ? 'opacity-100' : 'opacity-0 hover:opacity-100'
-                                        }`}
-                                />
-                            </a>
+                            link.path ? (
+                                <Link
+                                    key={link.id}
+                                    to={link.path}
+                                    className={`relative text-white/90 hover:text-white transition-all duration-300 cursor-pointer py-2 ${location.pathname === link.path ? 'text-white' : ''}`}
+                                >
+                                    {link.label}
+                                    <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[#C2A97E] rounded-full transition-all duration-300 ${location.pathname === link.path ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`} />
+                                </Link>
+                            ) : (
+                                <a
+                                    key={link.id}
+                                    href={`#${link.hash}`}
+                                    onClick={(e) => scrollToSection(e, link.hash!)}
+                                    className={`relative text-white/90 hover:text-white transition-all duration-300 cursor-pointer py-2 ${activeSection === link.hash ? 'text-white' : ''}`}
+                                >
+                                    {link.label}
+                                    <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[#C2A97E] rounded-full transition-all duration-300 ${activeSection === link.hash ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`} />
+                                </a>
+                            )
                         ))}
                         <Link
-                            to="/booking"
+                            to="/#rooms"
                             className="bg-[#C2A97E] hover:bg-[#A88B5A] text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-[#C2A97E]/30"
                         >
                             จองห้อง
@@ -125,14 +132,24 @@ export const Navbar = () => {
                 <div className="md:hidden bg-[#2F5D50]/98 backdrop-blur-lg border-t border-white/10">
                     <div className="px-4 py-4 space-y-2">
                         {navLinks.map((link) => (
-                            <a
-                                key={link.id}
-                                href={`#${link.id}`}
-                                onClick={(e) => scrollToSection(e, link.id)}
-                                className="block text-white/90 hover:text-white hover:bg-white/10 py-3 px-4 rounded-lg cursor-pointer transition-all duration-300"
-                            >
-                                {link.label}
-                            </a>
+                            link.path ? (
+                                <Link
+                                    key={link.id}
+                                    to={link.path}
+                                    className="block text-white/90 hover:text-white hover:bg-white/10 py-3 px-4 rounded-lg cursor-pointer transition-all duration-300"
+                                >
+                                    {link.label}
+                                </Link>
+                            ) : (
+                                <a
+                                    key={link.id}
+                                    href={`#${link.hash}`}
+                                    onClick={(e) => scrollToSection(e, link.hash!)}
+                                    className="block text-white/90 hover:text-white hover:bg-white/10 py-3 px-4 rounded-lg cursor-pointer transition-all duration-300"
+                                >
+                                    {link.label}
+                                </a>
+                            )
                         ))}
                         <Link
                             to="/booking"

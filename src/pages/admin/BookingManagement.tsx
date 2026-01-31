@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Calendar, X, ChevronDown, Filter, MoreHorizontal, CheckCircle, XCircle, User, Phone, Mail, Home, Moon } from 'lucide-react';
+import { Plus, Search, Calendar, X, ChevronDown, Filter, MoreHorizontal, CheckCircle, XCircle, User, Phone, Mail, Home, Moon, FileDown } from 'lucide-react';
 import { bookingsAPI, roomsAPI } from '../../services/api';
+import { generateBookingReceipt } from '../../utils/exportUtils';
 import type { Booking, Room } from '../../types';
 
 export const BookingManagement = () => {
@@ -412,6 +413,36 @@ export const BookingManagement = () => {
                                         Check-out
                                     </button>
                                 )}
+
+                                {/* PDF Receipt Button */}
+                                <button
+                                    onClick={() => {
+                                        const room = rooms.find(r => r.id === selectedBooking.roomId);
+                                        generateBookingReceipt({
+                                            bookingCode: selectedBooking.bookingCode,
+                                            guestName: selectedBooking.guestName,
+                                            guestPhone: selectedBooking.guestPhone,
+                                            guestEmail: selectedBooking.guestEmail || undefined,
+                                            checkInDate: selectedBooking.checkInDate,
+                                            checkOutDate: selectedBooking.checkOutDate,
+                                            nights: selectedBooking.nights,
+                                            adults: selectedBooking.adults,
+                                            children: selectedBooking.children,
+                                            roomName: room?.name,
+                                            roomType: room?.type,
+                                            roomPrice: selectedBooking.roomPrice,
+                                            totalAmount: selectedBooking.totalAmount,
+                                            paidAmount: selectedBooking.paidAmount,
+                                            paymentStatus: selectedBooking.paymentStatus,
+                                            status: selectedBooking.status,
+                                            createdAt: selectedBooking.createdAt
+                                        });
+                                    }}
+                                    className="btn-secondary w-full mt-2"
+                                >
+                                    <FileDown className="w-4 h-4" />
+                                    พิมพ์ใบเสร็จ PDF
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -38,7 +38,7 @@ export const Footer = () => {
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/booking" className="hover:text-[#C2A97E] transition-colors duration-300">
+                                <Link to="/#rooms" className="hover:text-[#C2A97E] transition-colors duration-300">
                                     จองห้อง
                                 </Link>
                             </li>

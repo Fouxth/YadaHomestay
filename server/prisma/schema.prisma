@@ -22,11 +22,12 @@ model User {
   auditLogs AuditLog[]
   
   // Relations
-  cleaningTasks    CleaningTask[]  @relation("CleaningAssigned")
-  maintenanceTasks MaintenanceTask[] @relation("MaintenanceAssigned")
-  stockMovements   StockMovement[]
-  transactions     Transaction[]
-  checkIns         CheckInOut[]
+  cleaningTasks       CleaningTask[]  @relation("CleaningAssigned")
+  maintenanceTasks    MaintenanceTask[] @relation("MaintenanceAssigned")
+  stockMovements      StockMovement[]
+  transactions        Transaction[]
+  checkIns            CheckInOut[]
+  paymentVerifications PaymentSlip[]
 }
 
 model Room {
@@ -40,6 +41,7 @@ model Room {
   amenities     String    // Stored as JSON string or comma separated
   floor         Int
   image         String?
+  description   String?   // Room description
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -83,6 +85,46 @@ model Booking {
   
   // Relations
   checkIns      CheckInOut[]
+  paymentSlips  PaymentSlip[]
+  review        Review?
+}
+
+// Customer review for completed booking
+model Review {
+  id            String   @id @default(uuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  
+  rating        Int      // 1-5 stars
+  comment       String?  // Customer comment
+  
+  // Rating categories (1-5)
+  cleanlinessRating  Int?  // ความสะอาด
+  serviceRating      Int?  // การบริการ
+  locationRating     Int?  // ทำเล
+  valueRating        Int?  // ความคุ้มค่า
+  
+  isApproved    Boolean  @default(true)  // Admin can hide inappropriate reviews
+  isHighlighted Boolean  @default(false) // Featured review
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Payment slip for booking verification
+model PaymentSlip {
+  id            String   @id @default(uuid())
+  bookingId     String
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  imageUrl      String   // Path to uploaded slip image
+  amount        Float?   // Amount shown in slip (optional)
+  status        String   @default("pending") // 'pending', 'verified', 'rejected'
+  notes         String?  // Admin notes
+  verifiedAt    DateTime?
+  verifiedById  String?
+  verifiedBy    User?    @relation(fields: [verifiedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Customer {

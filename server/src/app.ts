@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 
 import authRoutes from './routes/auth.routes';
 import roomRoutes from './routes/room.routes';
@@ -19,11 +20,16 @@ import maintenanceRoutes from './routes/maintenance.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import financeRoutes from './routes/finance.routes';
 import settingRoutes from './routes/setting.routes';
+import paymentRoutes from './routes/payment.routes';
+import reviewRoutes from './routes/review.routes';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
@@ -43,6 +49,8 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/settings', settingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Basic health check
 app.get('/health', (req, res) => {

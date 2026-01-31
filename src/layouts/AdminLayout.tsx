@@ -12,6 +12,7 @@ import {
     Wine, // Bar
     Package, // Inventory
     DollarSign, // Finance
+    CreditCard, // Payment Verification
     BarChart3, // Reports
     Settings,
     UserCog, // Employees (changed from Users)
@@ -52,6 +53,7 @@ export const AdminLayout = () => {
         { path: '/admin/bar', icon: Wine, label: 'บาร์ & เครื่องดื่ม' },
         { path: '/admin/inventory', icon: Package, label: 'คลังสินค้า' },
         { path: '/admin/finance', icon: DollarSign, label: 'การเงิน' },
+        { path: '/admin/payments', icon: CreditCard, label: 'ตรวจสอบการชำระ' },
         { path: '/admin/reports', icon: BarChart3, label: 'รายงาน' },
         { path: '/admin/employees', icon: UserCog, label: 'พนักงาน' },
         { path: '/admin/settings', icon: Settings, label: 'ตั้งค่า' },

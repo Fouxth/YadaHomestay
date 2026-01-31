@@ -237,3 +237,85 @@ export const settingsAPI = {
     update: (key: string, value: any) =>
         fetchWithAuth(`/settings/${key}`, { method: 'PUT', body: JSON.stringify({ value }) })
 };
+
+// Payment API - for slip uploads and verification
+const API_BASE_URL_RAW = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+export const paymentAPI = {
+    // Upload slip (public - no auth)
+    uploadSlip: async (bookingCode: string, slipFile: File, amount?: number) => {
+        const formData = new FormData();
+        formData.append('bookingCode', bookingCode);
+        formData.append('slip', slipFile);
+        if (amount) formData.append('amount', amount.toString());
+
+        const response = await fetch(`${API_BASE_URL_RAW}/payments/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Upload failed');
+        }
+        return response.json();
+    },
+
+    // Get booking with slips (public - by booking code)
+    getBookingStatus: (bookingCode: string) =>
+        fetch(`${API_BASE_URL_RAW}/payments/booking/${bookingCode}`).then(r => r.json()),
+
+    // Admin - get all slips
+    getAll: (status?: string) =>
+        fetchWithAuth(`/payments${status ? `?status=${status}` : ''}`),
+
+    // Admin - get payment stats
+    getStats: () => fetchWithAuth('/payments/stats'),
+
+    // Admin - verify slip
+    verify: (id: string, status: 'verified' | 'rejected', notes?: string) =>
+        fetchWithAuth(`/payments/${id}/verify`, {
+            method: 'PUT',
+            body: JSON.stringify({ status, notes })
+        })
+};
+
+// Reviews API - for customer reviews
+const API_BASE_URL_REVIEWS = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+export const reviewsAPI = {
+    // Public - submit review by booking code
+    submit: async (data: {
+        bookingCode: string;
+        rating: number;
+        comment?: string;
+        cleanlinessRating?: number;
+        serviceRating?: number;
+        locationRating?: number;
+        valueRating?: number;
+    }) => {
+        const response = await fetch(`${API_BASE_URL_REVIEWS}/reviews/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to submit review');
+        }
+        return response.json();
+    },
+
+    // Public - get reviews for homepage
+    getPublic: (limit = 6, highlighted = false) =>
+        fetch(`${API_BASE_URL_REVIEWS}/reviews/public?limit=${limit}${highlighted ? '&highlighted=true' : ''}`).then(r => r.json()),
+
+    // Admin - get all reviews
+    getAll: () => fetchWithAuth('/reviews'),
+
+    // Admin - update review
+    update: (id: string, data: { isApproved?: boolean; isHighlighted?: boolean }) =>
+        fetchWithAuth(`/reviews/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+    // Admin - delete review
+    delete: (id: string) => fetchWithAuth(`/reviews/${id}`, { method: 'DELETE' })
+};

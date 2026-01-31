@@ -19,13 +19,20 @@ export const updateSetting = async (req: Request, res: Response) => {
         const { key } = req.params;
         const { value } = req.body;
 
-        const setting = await prisma.setting.update({
+        let stringValue = value;
+        if (typeof value !== 'string') {
+            stringValue = JSON.stringify(value);
+        }
+
+        const setting = await prisma.setting.upsert({
             where: { key: String(key) },
-            data: { value }
+            update: { value: stringValue },
+            create: { key: String(key), value: stringValue }
         });
 
         res.json(setting);
     } catch (error) {
+        console.error('Update setting error:', error);
         res.status(500).json({ message: 'Error updating setting', error });
     }
 };
